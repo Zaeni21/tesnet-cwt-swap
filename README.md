@@ -96,6 +96,27 @@ The app requires a local blockchain service running on `http://127.0.0.1:3000`. 
 
    The blockchain service will start on `http://127.0.0.1:3000`.
 
+> For web/public access, set `EXPO_PUBLIC_BLOCKCHAIN_API_URL` to a publicly reachable blockchain API URL (not localhost). `localhost`/`127.0.0.1` only works on the same machine.
+
+Example:
+```bash
+EXPO_PUBLIC_BLOCKCHAIN_API_URL=https://your-public-chain-api.example.com pnpm dev
+```
+
+Optional (for explorer fallback on History refresh):
+```bash
+EXPO_PUBLIC_BLOCKSCOUT_BASE_URL=https://api.blockscout.com
+EXPO_PUBLIC_BLOCKSCOUT_CHAIN_ID=3945
+EXPO_PUBLIC_BLOCKSCOUT_ADDRESS=<contract-or-wallet-address>
+EXPO_PUBLIC_BLOCKSCOUT_API_KEY=proapi_euhXJReJkxLOLFrXcgYasSBmvtSELLalLXXaweqUvmUIBMkFWL3YatSlk5gYigDnE_elsgS3
+```
+
+This maps to:
+`https://api.blockscout.com/{{chainID}}/api/v2/addresses/{{address}}/transactions?apikey={{api-key}}`
+
+If `EXPO_PUBLIC_BLOCKSCOUT_CHAIN_ID` is not set, the app defaults to `3945`.  
+If `EXPO_PUBLIC_BLOCKSCOUT_API_KEY` is not set, the app uses the configured default pro API key above.
+
 ### Testing on Device
 
 1. **Scan the QR code** displayed in the Metro bundler output with Expo Go (iOS) or the Expo Go app (Android)

@@ -120,5 +120,22 @@ export const TOKEN_CONTRACTS = {
 } as const;
 
 
-export const API_BASE_URL = 'http://127.0.0.1:3000';
+const configuredApiBaseUrl = process.env.EXPO_PUBLIC_BLOCKCHAIN_API_URL?.trim();
+const configuredBlockscoutBaseUrl = process.env.EXPO_PUBLIC_BLOCKSCOUT_BASE_URL?.trim();
+const configuredBlockscoutChainId = process.env.EXPO_PUBLIC_BLOCKSCOUT_CHAIN_ID?.trim();
+const configuredBlockscoutAddress = process.env.EXPO_PUBLIC_BLOCKSCOUT_ADDRESS?.trim();
+const configuredBlockscoutApiKey = process.env.EXPO_PUBLIC_BLOCKSCOUT_API_KEY?.trim();
+
+export const API_BASE_URL =
+  configuredApiBaseUrl && configuredApiBaseUrl.length > 0
+    ? configuredApiBaseUrl
+    : 'http://127.0.0.1:3000';
+export const BLOCKSCOUT_BASE_URL =
+  configuredBlockscoutBaseUrl && configuredBlockscoutBaseUrl.length > 0
+    ? configuredBlockscoutBaseUrl
+    : 'https://api.blockscout.com';
+export const BLOCKSCOUT_CHAIN_ID = configuredBlockscoutChainId || '3945';
+export const BLOCKSCOUT_ADDRESS = configuredBlockscoutAddress || TOKEN_SWAP_ADDRESS;
+export const BLOCKSCOUT_API_KEY =
+  configuredBlockscoutApiKey || 'proapi_euhXJReJkxLOLFrXcgYasSBmvtSELLalLXXaweqUvmUIBMkFWL3YatSlk5gYigDnE_elsgS3';
 export const ACCOUNT_ID = 0; // Default account for swaps
