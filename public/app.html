@@ -3,115 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tesnet.cwt.swap - Interactive Token Swap</title>
+    <title>tesnet.cwt.swap - Nexus Token Exchange</title>
     <script src="https://cdn.ethers.io/lib/ethers-5.umd.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-bg: #0a0a0a;
+            --secondary-bg: #1a1a1a;
+            --accent-green: #00ff00;
+            --accent-yellow: #ffff00;
+            --accent-red: #ff0000;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #333333;
+        }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #0a7ea4 0%, #0d5a7a 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Courier New', monospace;
+            background: var(--primary-bg);
+            color: var(--text-primary);
             min-height: 100vh;
-            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, 0.05) 25%, rgba(0, 255, 0, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.05) 75%, rgba(0, 255, 0, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, 0.05) 25%, rgba(0, 255, 0, 0.05) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.05) 75%, rgba(0, 255, 0, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 1;
         }
         
         .container {
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
         }
         
+        /* Header */
         .header {
-            text-align: center;
-            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px dashed var(--accent-green);
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--accent-green);
+            text-transform: uppercase;
+        }
+        
+        .logo span {
+            color: var(--accent-yellow);
+        }
+        
+        .header-right {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .network-badge {
+            padding: 8px 12px;
+            border: 2px dashed var(--accent-yellow);
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent-yellow);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .wallet-btn {
+            padding: 10px 16px;
+            background: transparent;
+            border: 2px solid var(--accent-green);
+            color: var(--accent-green);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .wallet-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--accent-green);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+        
+        .wallet-btn:hover::before {
+            left: 0;
+        }
+        
+        .wallet-btn:hover {
+            color: var(--primary-bg);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        
+        .wallet-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Main Card */
+        .card {
+            background: var(--secondary-bg);
+            border: 2px dashed var(--accent-green);
+            padding: 30px;
             margin-bottom: 20px;
-            padding-top: 20px;
+            position: relative;
+            overflow: hidden;
         }
         
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 5px;
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 255, 0, 0.1), transparent 70%);
+            pointer-events: none;
         }
         
-        .header p {
-            font-size: 14px;
-            opacity: 0.9;
+        .card-content {
+            position: relative;
+            z-index: 2;
         }
         
-        .wallet-section {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 16px;
-            color: white;
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        /* Wallet Status */
+        .wallet-status {
+            background: var(--primary-bg);
+            border: 1px solid var(--accent-yellow);
+            padding: 16px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
         
-        .wallet-info {
+        .wallet-status-text {
             font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
-        .wallet-address {
+        .wallet-status-address {
             font-size: 14px;
             font-weight: 600;
+            font-family: 'Courier New', monospace;
+            color: var(--accent-yellow);
             margin-top: 4px;
-            font-family: monospace;
         }
         
-        .wallet-btn {
-            padding: 8px 16px;
-            background: white;
-            color: #0a7ea4;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .wallet-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-        }
-        
-        .wallet-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 24px;
-            padding: 24px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            margin-bottom: 20px;
-        }
-        
+        /* Tabs */
         .tabs {
             display: flex;
-            gap: 10px;
+            gap: 0;
             margin-bottom: 20px;
-            border-bottom: 1px solid #E5E7EB;
+            border-bottom: 2px dashed var(--border-color);
         }
         
         .tab-btn {
             flex: 1;
             padding: 12px;
-            background: none;
+            background: transparent;
             border: none;
             border-bottom: 3px solid transparent;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
-            color: #687076;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
             transition: all 0.3s ease;
+            position: relative;
         }
         
         .tab-btn.active {
-            color: #0a7ea4;
-            border-bottom-color: #0a7ea4;
+            color: var(--accent-green);
+            border-bottom-color: var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
         }
         
         .tab-content {
@@ -122,16 +233,18 @@
             display: block;
         }
         
+        /* Swap Section */
         .swap-section {
             margin-bottom: 20px;
         }
         
         .swap-label {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
-            color: #687076;
+            color: var(--accent-yellow);
             margin-bottom: 8px;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .token-selector {
@@ -139,44 +252,50 @@
             align-items: center;
             justify-content: space-between;
             padding: 12px;
-            background: #f5f5f5;
-            border-radius: 12px;
+            background: var(--primary-bg);
+            border: 1px solid var(--border-color);
             cursor: pointer;
             transition: all 0.3s ease;
             margin-bottom: 12px;
+            position: relative;
         }
         
         .token-selector:hover {
-            background: #E5E7EB;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
         }
         
         .token-info {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
         
         .token-icon {
             width: 40px;
             height: 40px;
-            border-radius: 50%;
+            border-radius: 2px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 600;
             color: white;
+            border: 2px solid;
         }
         
         .token-details h3 {
             font-size: 14px;
-            color: #11181C;
+            color: var(--text-primary);
             margin-bottom: 2px;
+            font-weight: 600;
         }
         
         .token-details p {
-            font-size: 12px;
-            color: #687076;
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .input-group {
@@ -188,34 +307,41 @@
         .amount-input {
             flex: 1;
             padding: 12px;
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
+            background: var(--primary-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
             font-size: 16px;
             font-weight: 600;
+            font-family: 'Courier New', monospace;
+            transition: all 0.3s ease;
         }
         
         .amount-input:focus {
             outline: none;
-            border-color: #0a7ea4;
-            box-shadow: 0 0 0 3px rgba(10, 126, 164, 0.1);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
         }
         
         .max-btn {
-            padding: 8px 12px;
-            background: #0a7ea4;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
+            padding: 10px 14px;
+            background: transparent;
+            color: var(--accent-yellow);
+            border: 1px solid var(--accent-yellow);
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             transition: all 0.3s ease;
         }
         
         .max-btn:hover {
-            background: #0d5a7a;
+            background: var(--accent-yellow);
+            color: var(--primary-bg);
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
         }
         
+        /* Swap Arrow */
         .swap-arrow {
             text-align: center;
             margin: 16px 0;
@@ -224,11 +350,11 @@
         .swap-arrow button {
             width: 50px;
             height: 50px;
-            border-radius: 50%;
-            background: #0a7ea4;
-            color: white;
-            border: none;
-            font-size: 24px;
+            border-radius: 0;
+            background: transparent;
+            color: var(--accent-green);
+            border: 2px dashed var(--accent-green);
+            font-size: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
@@ -238,48 +364,75 @@
         }
         
         .swap-arrow button:hover {
-            background: #0d5a7a;
-            transform: scale(1.1);
+            background: var(--accent-green);
+            color: var(--primary-bg);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+            transform: rotate(180deg);
         }
         
+        /* You Receive */
         .you-receive {
-            background: #f5f5f5;
+            background: var(--primary-bg);
+            border: 1px solid var(--accent-yellow);
             padding: 16px;
-            border-radius: 12px;
             margin-bottom: 16px;
         }
         
         .you-receive-label {
-            font-size: 12px;
-            color: #687076;
+            font-size: 11px;
+            color: var(--accent-yellow);
             margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .you-receive-amount {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
-            color: #11181C;
+            color: var(--accent-yellow);
+            font-family: 'Courier New', monospace;
         }
         
+        /* Buttons */
         .button {
             width: 100%;
             padding: 14px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
+            border: 2px solid;
+            background: transparent;
+            font-size: 12px;
             font-weight: 600;
             cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         
         .button-primary {
-            background: #0a7ea4;
-            color: white;
+            border-color: var(--accent-green);
+            color: var(--accent-green);
         }
         
-        .button-primary:hover:not(:disabled) {
-            background: #0d5a7a;
-            transform: translateY(-2px);
+        .button-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--accent-green);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+        
+        .button-primary:hover::before {
+            left: 0;
+        }
+        
+        .button-primary:hover {
+            color: var(--primary-bg);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
         }
         
         .button:disabled {
@@ -287,25 +440,36 @@
             cursor: not-allowed;
         }
         
+        /* History */
         .history-item {
             padding: 12px;
-            background: #f5f5f5;
-            border-radius: 12px;
+            background: var(--primary-bg);
+            border: 1px solid var(--border-color);
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .history-item:hover {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.1);
         }
         
         .history-info h4 {
-            font-size: 14px;
-            color: #11181C;
+            font-size: 13px;
+            color: var(--text-primary);
             margin-bottom: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .history-info p {
-            font-size: 12px;
-            color: #687076;
+            font-size: 11px;
+            color: var(--text-secondary);
+            font-family: 'Courier New', monospace;
         }
         
         .history-amount {
@@ -313,58 +477,58 @@
         }
         
         .history-amount p {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            color: #11181C;
+            color: var(--accent-yellow);
             margin-bottom: 4px;
+            font-family: 'Courier New', monospace;
         }
         
         .history-amount span {
-            font-size: 12px;
-            color: #687076;
+            font-size: 11px;
+            color: var(--accent-green);
+            font-family: 'Courier New', monospace;
         }
         
         .empty-state {
             text-align: center;
             padding: 40px 20px;
-            color: #687076;
+            color: var(--text-secondary);
         }
         
+        /* Status Messages */
         .status {
             padding: 12px;
-            border-radius: 12px;
             margin-bottom: 16px;
-            font-size: 14px;
+            font-size: 12px;
             display: none;
+            border: 1px solid;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .status.success {
-            background: #D1FAE5;
-            color: #065F46;
+            background: rgba(0, 255, 0, 0.1);
+            border-color: var(--accent-green);
+            color: var(--accent-green);
             display: block;
         }
         
         .status.error {
-            background: #FEE2E2;
-            color: #991B1B;
+            background: rgba(255, 0, 0, 0.1);
+            border-color: var(--accent-red);
+            color: var(--accent-red);
             display: block;
         }
         
         .status.loading {
-            background: #DBEAFE;
-            color: #1E40AF;
+            background: rgba(255, 255, 0, 0.1);
+            border-color: var(--accent-yellow);
+            color: var(--accent-yellow);
             display: block;
         }
         
-        .network-info {
-            font-size: 12px;
-            color: #687076;
-            padding: 12px;
-            background: #f5f5f5;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-        
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -372,10 +536,11 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.8);
             z-index: 1000;
             align-items: center;
             justify-content: center;
+            backdrop-filter: blur(5px);
         }
         
         .modal.active {
@@ -383,35 +548,50 @@
         }
         
         .modal-content {
-            background: white;
-            border-radius: 24px;
+            background: var(--secondary-bg);
+            border: 2px dashed var(--accent-green);
             padding: 24px;
             max-width: 400px;
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
+            position: relative;
         }
         
         .modal-header {
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 16px;
+            font-weight: 700;
             margin-bottom: 16px;
-            color: #11181C;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .modal-close {
-            float: right;
+            position: absolute;
+            top: 12px;
+            right: 12px;
             background: none;
             border: none;
             font-size: 24px;
             cursor: pointer;
-            color: #687076;
+            color: var(--accent-yellow);
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            color: var(--accent-green);
+            transform: rotate(90deg);
         }
         
         .token-option {
             padding: 12px;
-            border: 1px solid #E5E7EB;
-            border-radius: 12px;
+            border: 1px solid var(--border-color);
             margin-bottom: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -421,90 +601,116 @@
         }
         
         .token-option:hover {
-            background: #f5f5f5;
-            border-color: #0a7ea4;
+            background: var(--primary-bg);
+            border-color: var(--accent-green);
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--primary-bg);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--accent-green);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-yellow);
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Header -->
         <div class="header">
-            <h1>⇅ tesnet.cwt.swap</h1>
-            <p>Token Swap Exchange</p>
-        </div>
-        
-        <div class="wallet-section">
-            <div class="wallet-info">
-                <div>Wallet Status</div>
-                <div class="wallet-address" id="walletAddress">Not Connected</div>
+            <div class="logo">NEXUS <span>SWAP</span></div>
+            <div class="header-right">
+                <div class="network-badge">Testnet</div>
+                <button class="wallet-btn" id="walletBtn" onclick="connectWallet()">Connect</button>
             </div>
-            <button class="wallet-btn" id="walletBtn" onclick="connectWallet()">Connect</button>
         </div>
         
+        <!-- Main Card -->
         <div class="card">
-            <div class="network-info">
-                <strong>Network:</strong> Nexus Testnet<br>
-                <strong>Chain ID:</strong> 3945<br>
-                <strong>RPC:</strong> testnet.rpc.nexus.xyz
-            </div>
-            
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('swap')">Swap</button>
-                <button class="tab-btn" onclick="switchTab('history')">History</button>
-            </div>
-            
-            <!-- Swap Tab -->
-            <div id="swap" class="tab-content active">
-                <div id="status" class="status"></div>
+            <div class="card-content">
+                <!-- Wallet Status -->
+                <div class="wallet-status">
+                    <div>
+                        <div class="wallet-status-text">Wallet Status</div>
+                        <div class="wallet-status-address" id="walletAddress">Not Connected</div>
+                    </div>
+                </div>
                 
-                <div class="swap-section">
-                    <div class="swap-label">From</div>
-                    <div class="token-selector" onclick="openTokenModal('from')">
-                        <div class="token-info">
-                            <div class="token-icon" id="fromIcon" style="background: #9945FF;">N</div>
-                            <div class="token-details">
-                                <h3>Send</h3>
-                                <p id="fromToken">NEX</p>
+                <!-- Tabs -->
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchTab('swap')">Swap</button>
+                    <button class="tab-btn" onclick="switchTab('history')">History</button>
+                </div>
+                
+                <!-- Swap Tab -->
+                <div id="swap" class="tab-content active">
+                    <div id="status" class="status"></div>
+                    
+                    <!-- From Token -->
+                    <div class="swap-section">
+                        <div class="swap-label">From</div>
+                        <div class="token-selector" onclick="openTokenModal('from')">
+                            <div class="token-info">
+                                <div class="token-icon" id="fromIcon" style="border-color: #9945FF;">N</div>
+                                <div class="token-details">
+                                    <h3>Send</h3>
+                                    <p id="fromToken">NEX</p>
+                                </div>
                             </div>
+                            <span style="color: var(--accent-green);">→</span>
                         </div>
-                        <span>→</span>
+                        
+                        <div class="input-group">
+                            <input type="number" id="fromAmount" class="amount-input" placeholder="0.00" min="0" step="0.01" oninput="updateQuote()">
+                            <button class="max-btn" onclick="setMaxAmount()">Max</button>
+                        </div>
                     </div>
                     
-                    <div class="input-group">
-                        <input type="number" id="fromAmount" class="amount-input" placeholder="0.00" min="0" step="0.01" oninput="updateQuote()">
-                        <button class="max-btn" onclick="setMaxAmount()">Max</button>
+                    <!-- Swap Arrow -->
+                    <div class="swap-arrow">
+                        <button onclick="swapTokens()">⇅</button>
                     </div>
-                </div>
-                
-                <div class="swap-arrow">
-                    <button onclick="swapTokens()">⇅</button>
-                </div>
-                
-                <div class="swap-section">
-                    <div class="swap-label">To</div>
-                    <div class="token-selector" onclick="openTokenModal('to')">
-                        <div class="token-info">
-                            <div class="token-icon" id="toIcon" style="background: #627EEA;">E</div>
-                            <div class="token-details">
-                                <h3>Receive</h3>
-                                <p id="toToken">ETH</p>
+                    
+                    <!-- To Token -->
+                    <div class="swap-section">
+                        <div class="swap-label">To</div>
+                        <div class="token-selector" onclick="openTokenModal('to')">
+                            <div class="token-info">
+                                <div class="token-icon" id="toIcon" style="border-color: #627EEA;">E</div>
+                                <div class="token-details">
+                                    <h3>Receive</h3>
+                                    <p id="toToken">ETH</p>
+                                </div>
                             </div>
+                            <span style="color: var(--accent-green);">→</span>
                         </div>
-                        <span>→</span>
                     </div>
+                    
+                    <!-- You Receive -->
+                    <div class="you-receive">
+                        <div class="you-receive-label">You Receive</div>
+                        <div class="you-receive-amount" id="receiveAmount">0.00</div>
+                    </div>
+                    
+                    <!-- Swap Button -->
+                    <button class="button button-primary" onclick="executeSwap()" id="swapBtn">Execute Swap</button>
                 </div>
                 
-                <div class="you-receive">
-                    <div class="you-receive-label">You Receive</div>
-                    <div class="you-receive-amount" id="receiveAmount">0.00</div>
+                <!-- History Tab -->
+                <div id="history" class="tab-content">
+                    <div id="historyList"></div>
                 </div>
-                
-                <button class="button button-primary" onclick="executeSwap()" id="swapBtn">Review Swap</button>
-            </div>
-            
-            <!-- History Tab -->
-            <div id="history" class="tab-content">
-                <div id="historyList"></div>
             </div>
         </div>
     </div>
@@ -521,6 +727,8 @@
     <script>
         const RPC_URL = 'https://testnet.rpc.nexus.xyz';
         const API_URL = 'http://127.0.0.1:3000';
+        const CHAIN_ID = 3945;
+        const CHAIN_ID_HEX = '0xf69';
         
         const TOKENS = {
             NEX: { name: 'Nexus', color: '#9945FF', icon: 'N' },
@@ -541,29 +749,58 @@
             currentModal: null,
             walletConnected: false,
             userAddress: null,
-            provider: null,
-            signer: null
+            provider: null
         };
         
-        // Initialize ethers provider
-        async function initProvider() {
-            try {
-                if (window.ethers) {
-                    state.provider = new ethers.providers.JsonRpcProvider(RPC_URL);
-                    console.log('Provider initialized with RPC:', RPC_URL);
+        // Initialize
+        async function init() {
+            loadHistory();
+            updateTokenDisplay();
+            await autoConnectWallet();
+        }
+        
+        // Auto-connect and switch to Nexus Testnet
+        async function autoConnectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    // Check current chain
+                    const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                    
+                    // If not on Nexus testnet, switch or add it
+                    if (chainId !== CHAIN_ID_HEX) {
+                        try {
+                            await window.ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: CHAIN_ID_HEX }]
+                            });
+                            showStatus('Switched to Nexus Testnet', 'success');
+                        } catch (switchError) {
+                            if (switchError.code === 4902) {
+                                // Chain not added, add it
+                                await window.ethereum.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [{
+                                        chainId: CHAIN_ID_HEX,
+                                        chainName: 'Nexus Testnet',
+                                        rpcUrls: [RPC_URL],
+                                        blockExplorerUrls: ['https://testnet.explorer.nexus.xyz/']
+                                    }]
+                                });
+                                showStatus('Added Nexus Testnet to wallet', 'success');
+                            }
+                        }
+                    }
+                } catch (error) {
+                    console.log('Auto-switch info:', error.message);
                 }
-            } catch (error) {
-                console.error('Error initializing provider:', error);
             }
         }
         
         // Connect Wallet
         async function connectWallet() {
             try {
-                // Check if MetaMask is installed
                 if (typeof window.ethereum !== 'undefined') {
                     try {
-                        // Request account access
                         const accounts = await window.ethereum.request({ 
                             method: 'eth_requestAccounts' 
                         });
@@ -572,19 +809,18 @@
                             state.walletConnected = true;
                             state.userAddress = accounts[0];
                             
-                            // Try to switch to Nexus testnet
+                            // Auto-switch to Nexus testnet
                             try {
                                 await window.ethereum.request({
                                     method: 'wallet_switchEthereumChain',
-                                    params: [{ chainId: '0xf69' }] // 3945 in hex
+                                    params: [{ chainId: CHAIN_ID_HEX }]
                                 });
                             } catch (switchError) {
                                 if (switchError.code === 4902) {
-                                    // Chain not added, try to add it
                                     await window.ethereum.request({
                                         method: 'wallet_addEthereumChain',
                                         params: [{
-                                            chainId: '0xf69',
+                                            chainId: CHAIN_ID_HEX,
                                             chainName: 'Nexus Testnet',
                                             rpcUrls: [RPC_URL],
                                             blockExplorerUrls: ['https://testnet.explorer.nexus.xyz/']
@@ -594,25 +830,24 @@
                             }
                             
                             updateWalletDisplay();
-                            showStatus(`Wallet connected: ${state.userAddress.substring(0, 6)}...${state.userAddress.substring(38)}`, 'success');
+                            showStatus(`Connected: ${state.userAddress.substring(0, 6)}...${state.userAddress.substring(38)}`, 'success');
                         }
                     } catch (error) {
                         if (error.code === 4001) {
-                            showStatus('User rejected wallet connection', 'error');
+                            showStatus('Connection rejected', 'error');
                         } else {
                             throw error;
                         }
                     }
                 } else {
-                    // MetaMask not installed, use demo mode
                     state.walletConnected = true;
                     state.userAddress = '0x' + Math.random().toString(16).slice(2, 42);
                     updateWalletDisplay();
-                    showStatus('Demo wallet connected (MetaMask not detected)', 'success');
+                    showStatus('Demo wallet connected', 'success');
                 }
             } catch (error) {
-                console.error('Wallet connection error:', error);
-                showStatus('Error connecting wallet: ' + error.message, 'error');
+                console.error('Error:', error);
+                showStatus('Connection error', 'error');
             }
         }
         
@@ -637,17 +872,17 @@
             state.walletConnected = false;
             state.userAddress = null;
             updateWalletDisplay();
-            showStatus('Wallet disconnected', 'success');
+            showStatus('Disconnected', 'success');
         }
         
-        // Load history from localStorage
+        // Load history
         function loadHistory() {
             const saved = localStorage.getItem('swapHistory');
             state.history = saved ? JSON.parse(saved) : [];
             renderHistory();
         }
         
-        // Save history to localStorage
+        // Save history
         function saveHistory() {
             localStorage.setItem('swapHistory', JSON.stringify(state.history));
         }
@@ -678,8 +913,7 @@
                 state.toAmount = data.amount_out;
                 document.getElementById('receiveAmount').textContent = data.amount_out.toFixed(2);
             } catch (error) {
-                console.error('Error fetching quote:', error);
-                showStatus('Error fetching quote', 'error');
+                console.error('Error:', error);
             }
         }
         
@@ -688,7 +922,6 @@
             const temp = state.fromToken;
             state.fromToken = state.toToken;
             state.toToken = temp;
-            
             updateTokenDisplay();
             updateQuote();
         }
@@ -701,10 +934,10 @@
             const fromToken = TOKENS[state.fromToken];
             const toToken = TOKENS[state.toToken];
             
-            document.getElementById('fromIcon').style.background = fromToken.color;
+            document.getElementById('fromIcon').style.borderColor = fromToken.color;
             document.getElementById('fromIcon').textContent = fromToken.icon;
             
-            document.getElementById('toIcon').style.background = toToken.color;
+            document.getElementById('toIcon').style.borderColor = toToken.color;
             document.getElementById('toIcon').textContent = toToken.icon;
         }
         
@@ -718,10 +951,10 @@
                 const div = document.createElement('div');
                 div.className = 'token-option';
                 div.innerHTML = `
-                    <div class="token-icon" style="background: ${token.color}; width: 40px; height: 40px;">${token.icon}</div>
+                    <div class="token-icon" style="border-color: ${token.color}; width: 40px; height: 40px;">${token.icon}</div>
                     <div>
-                        <div style="font-weight: 600; color: #11181C;">${symbol}</div>
-                        <div style="font-size: 12px; color: #687076;">${token.name}</div>
+                        <div style="font-weight: 600; color: var(--text-primary);">${symbol}</div>
+                        <div style="font-size: 11px; color: var(--text-secondary);">${token.name}</div>
                     </div>
                 `;
                 div.onclick = () => selectToken(symbol, type);
@@ -738,7 +971,6 @@
             } else {
                 state.toToken = symbol;
             }
-            
             updateTokenDisplay();
             updateQuote();
             closeTokenModal();
@@ -758,25 +990,25 @@
         // Execute swap
         async function executeSwap() {
             if (!state.walletConnected) {
-                showStatus('Please connect your wallet first', 'error');
+                showStatus('Connect wallet first', 'error');
                 return;
             }
             
             const amount = parseFloat(document.getElementById('fromAmount').value);
             
             if (amount <= 0) {
-                showStatus('Please enter an amount', 'error');
+                showStatus('Enter amount', 'error');
                 return;
             }
             
             if (state.fromToken === state.toToken) {
-                showStatus('Please select different tokens', 'error');
+                showStatus('Select different tokens', 'error');
                 return;
             }
             
             const btn = document.getElementById('swapBtn');
             btn.disabled = true;
-            showStatus('Processing swap...', 'loading');
+            showStatus('Processing...', 'loading');
             
             try {
                 const response = await fetch(`${API_URL}/transaction`, {
@@ -807,21 +1039,21 @@
                     state.history.unshift(transaction);
                     saveHistory();
                     
-                    showStatus(`Swap successful! You received ${state.toAmount.toFixed(2)} ${state.toToken}`, 'success');
+                    showStatus(`Swap successful! +${state.toAmount.toFixed(2)} ${state.toToken}`, 'success');
                     document.getElementById('fromAmount').value = '';
                     document.getElementById('receiveAmount').textContent = '0.00';
                 } else {
-                    showStatus('Swap failed. Please try again.', 'error');
+                    showStatus('Swap failed', 'error');
                 }
             } catch (error) {
-                console.error('Error executing swap:', error);
+                console.error('Error:', error);
                 showStatus('Error executing swap', 'error');
             } finally {
                 btn.disabled = false;
             }
         }
         
-        // Show status message
+        // Show status
         function showStatus(message, type) {
             const statusEl = document.getElementById('status');
             statusEl.textContent = message;
@@ -839,7 +1071,7 @@
             const historyList = document.getElementById('historyList');
             
             if (state.history.length === 0) {
-                historyList.innerHTML = '<div class="empty-state"><p>No transactions yet</p><p>Start swapping to see your history</p></div>';
+                historyList.innerHTML = '<div class="empty-state"><p>No transactions</p></div>';
                 return;
             }
             
@@ -848,7 +1080,7 @@
                     <div class="history-info">
                         <h4>${tx.fromToken} → ${tx.toToken}</h4>
                         <p>${tx.timestamp}</p>
-                        <p style="font-size: 11px; margin-top: 4px; font-family: monospace;">${tx.wallet ? tx.wallet.substring(0, 10) + '...' : 'Unknown'}</p>
+                        <p>${tx.wallet ? tx.wallet.substring(0, 10) + '...' : 'Unknown'}</p>
                     </div>
                     <div class="history-amount">
                         <p>-${tx.fromAmount.toFixed(2)}</p>
@@ -858,17 +1090,15 @@
             `).join('');
         }
         
-        // Initialize
-        updateTokenDisplay();
-        loadHistory();
-        initProvider();
-        
-        // Close modal when clicking outside
+        // Close modal on outside click
         document.getElementById('tokenModal').addEventListener('click', (e) => {
             if (e.target.id === 'tokenModal') {
                 closeTokenModal();
             }
         });
+        
+        // Initialize on load
+        window.addEventListener('load', init);
     </script>
 </body>
 </html>
