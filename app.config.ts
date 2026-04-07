@@ -32,15 +32,15 @@ const env = {
   appSlug: "tesnet-cwt-swap",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
-  logoUrl: "",
+  logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663524143034/St8sre6fyfQWrbb8Vtx5RW/icon-fqojoXiNMWrjCp9Joh7gd2.webp",
   scheme: schemeFromBundleId,
   iosBundleId: bundleId,
   androidPackage: bundleId,
 };
 
 const config: ExpoConfig = {
-  name: env.appName,
-  slug: env.appSlug,
+  name: "tesnet.cwt.swap",
+  slug: "tesnet-cwt-swap",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
