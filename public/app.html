@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>tesnet.cwt.swap - Interactive Token Swap</title>
+    <script async src="https://cdn.jsdelivr.net/npm/@privy-io/js-sdk-core"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -22,7 +23,7 @@
         .header {
             text-align: center;
             color: white;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             padding-top: 20px;
         }
         
@@ -34,6 +35,45 @@
         .header p {
             font-size: 14px;
             opacity: 0.9;
+        }
+        
+        .wallet-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 16px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .wallet-info {
+            font-size: 12px;
+        }
+        
+        .wallet-address {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 4px;
+            font-family: monospace;
+        }
+        
+        .wallet-btn {
+            padding: 8px 16px;
+            background: white;
+            color: #0a7ea4;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .wallet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         
         .card {
@@ -285,10 +325,6 @@
             color: #687076;
         }
         
-        .empty-state p {
-            margin-bottom: 10px;
-        }
-        
         .status {
             padding: 12px;
             border-radius: 12px;
@@ -313,6 +349,15 @@
             background: #DBEAFE;
             color: #1E40AF;
             display: block;
+        }
+        
+        .network-info {
+            font-size: 12px;
+            color: #687076;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            margin-bottom: 16px;
         }
         
         .modal {
@@ -397,7 +442,21 @@
             <p>Token Swap Exchange</p>
         </div>
         
+        <div class="wallet-section">
+            <div class="wallet-info">
+                <div>Wallet Status</div>
+                <div class="wallet-address" id="walletAddress">Not Connected</div>
+            </div>
+            <button class="wallet-btn" id="walletBtn" onclick="connectWallet()">Connect</button>
+        </div>
+        
         <div class="card">
+            <div class="network-info">
+                <strong>Network:</strong> Nexus Testnet<br>
+                <strong>Chain ID:</strong> 3945<br>
+                <strong>RPC:</strong> testnet.rpc.nexus.xyz
+            </div>
+            
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('swap')">Swap</button>
                 <button class="tab-btn" onclick="switchTab('history')">History</button>
@@ -469,7 +528,10 @@
     </div>
     
     <script>
+        const RPC_URL = 'https://testnet.rpc.nexus.xyz';
+        const PRIVY_APP_ID = 'cmnojdb6b00cr0cl2n1f0nryl';
         const API_URL = 'http://127.0.0.1:3000';
+        
         const TOKENS = {
             NEX: { name: 'Nexus', color: '#9945FF', icon: 'N' },
             ETH: { name: 'Ethereum', color: '#627EEA', icon: 'E' },
@@ -486,8 +548,77 @@
             fromAmount: 0,
             toAmount: 0,
             history: [],
-            currentModal: null
+            currentModal: null,
+            walletConnected: false,
+            userAddress: null
         };
+        
+        // Initialize Privy
+        async function initPrivy() {
+            try {
+                if (window.Privy) {
+                    window.privy = new window.Privy({
+                        appId: PRIVY_APP_ID
+                    });
+                    console.log('Privy initialized');
+                }
+            } catch (error) {
+                console.error('Error initializing Privy:', error);
+            }
+        }
+        
+        // Connect Wallet
+        async function connectWallet() {
+            try {
+                if (!window.privy) {
+                    showStatus('Privy SDK not loaded. Please refresh the page.', 'error');
+                    return;
+                }
+                
+                // Try to connect wallet using Privy
+                const user = await window.privy.login();
+                
+                if (user && user.wallet) {
+                    state.walletConnected = true;
+                    state.userAddress = user.wallet.address;
+                    updateWalletDisplay();
+                    showStatus(`Wallet connected: ${user.wallet.address.substring(0, 6)}...${user.wallet.address.substring(38)}`, 'success');
+                } else {
+                    showStatus('Failed to connect wallet', 'error');
+                }
+            } catch (error) {
+                console.error('Wallet connection error:', error);
+                // Fallback: simulate wallet connection for demo
+                state.walletConnected = true;
+                state.userAddress = '0x' + Math.random().toString(16).slice(2, 42);
+                updateWalletDisplay();
+                showStatus('Demo wallet connected (local simulation)', 'success');
+            }
+        }
+        
+        // Update wallet display
+        function updateWalletDisplay() {
+            const walletBtn = document.getElementById('walletBtn');
+            const walletAddress = document.getElementById('walletAddress');
+            
+            if (state.walletConnected && state.userAddress) {
+                walletAddress.textContent = state.userAddress.substring(0, 6) + '...' + state.userAddress.substring(38);
+                walletBtn.textContent = 'Disconnect';
+                walletBtn.onclick = disconnectWallet;
+            } else {
+                walletAddress.textContent = 'Not Connected';
+                walletBtn.textContent = 'Connect';
+                walletBtn.onclick = connectWallet;
+            }
+        }
+        
+        // Disconnect Wallet
+        function disconnectWallet() {
+            state.walletConnected = false;
+            state.userAddress = null;
+            updateWalletDisplay();
+            showStatus('Wallet disconnected', 'success');
+        }
         
         // Load history from localStorage
         function loadHistory() {
@@ -606,6 +737,11 @@
         
         // Execute swap
         async function executeSwap() {
+            if (!state.walletConnected) {
+                showStatus('Please connect your wallet first', 'error');
+                return;
+            }
+            
             const amount = parseFloat(document.getElementById('fromAmount').value);
             
             if (amount <= 0) {
@@ -644,7 +780,8 @@
                         fromAmount: amount,
                         toAmount: state.toAmount,
                         timestamp: new Date().toLocaleString(),
-                        status: 'success'
+                        status: 'success',
+                        wallet: state.userAddress
                     };
                     
                     state.history.unshift(transaction);
@@ -691,6 +828,7 @@
                     <div class="history-info">
                         <h4>${tx.fromToken} → ${tx.toToken}</h4>
                         <p>${tx.timestamp}</p>
+                        <p style="font-size: 11px; margin-top: 4px; font-family: monospace;">${tx.wallet ? tx.wallet.substring(0, 10) + '...' : 'Unknown'}</p>
                     </div>
                     <div class="history-amount">
                         <p>-${tx.fromAmount.toFixed(2)}</p>
@@ -703,6 +841,7 @@
         // Initialize
         updateTokenDisplay();
         loadHistory();
+        initPrivy();
         
         // Close modal when clicking outside
         document.getElementById('tokenModal').addEventListener('click', (e) => {
