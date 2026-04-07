@@ -1,5 +1,15 @@
 import axios from 'axios';
-import { API_BASE_URL, TokenSymbol, QuoteResponse, TransactionPayload, BlockResponse } from './types';
+import {
+  API_BASE_URL,
+  BLOCKSCOUT_ADDRESS,
+  BLOCKSCOUT_API_KEY,
+  BLOCKSCOUT_BASE_URL,
+  BLOCKSCOUT_CHAIN_ID,
+  TokenSymbol,
+  QuoteResponse,
+  TransactionPayload,
+  BlockResponse,
+} from './types';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -25,6 +35,11 @@ export async function getQuote(
     return response.data.amount_out;
   } catch (error) {
     console.error('Failed to fetch quote:', error);
+    if (axios.isAxiosError(error) && !error.response) {
+      throw new Error(
+        `Cannot reach blockchain API at ${API_BASE_URL}. Check EXPO_PUBLIC_BLOCKCHAIN_API_URL or run the local chain on port 3000.`
+      );
+    }
     throw new Error('Failed to fetch exchange rate');
   }
 }
@@ -51,6 +66,11 @@ export async function submitSwap(
     await api.post('/transaction', payload);
   } catch (error) {
     console.error('Failed to submit swap:', error);
+    if (axios.isAxiosError(error) && !error.response) {
+      throw new Error(
+        `Cannot reach blockchain API at ${API_BASE_URL}. Check EXPO_PUBLIC_BLOCKCHAIN_API_URL or run the local chain on port 3000.`
+      );
+    }
     throw new Error('Failed to submit swap transaction');
   }
 }
@@ -79,5 +99,38 @@ export async function checkApiHealth(): Promise<boolean> {
     return true;
   } catch {
     return false;
+  }
+}
+
+export interface BlockscoutTransaction {
+  hash: string;
+  timestamp?: string;
+  method?: string;
+  from?: { hash: string };
+  to?: { hash: string };
+  value?: string;
+}
+
+export async function getBlockscoutAddressTransactions(limit: number = 20): Promise<BlockscoutTransaction[]> {
+  if (!BLOCKSCOUT_CHAIN_ID || !BLOCKSCOUT_ADDRESS) {
+    return [];
+  }
+
+  try {
+    const response = await axios.get<{ items?: BlockscoutTransaction[] }>(
+      `${BLOCKSCOUT_BASE_URL}/${BLOCKSCOUT_CHAIN_ID}/api/v2/addresses/${BLOCKSCOUT_ADDRESS}/transactions`,
+      {
+        params: {
+          apikey: BLOCKSCOUT_API_KEY || undefined,
+          items_count: limit,
+        },
+        timeout: 10000,
+      }
+    );
+
+    return response.data.items ?? [];
+  } catch (error) {
+    console.error('Failed to fetch Blockscout transactions:', error);
+    return [];
   }
 }
