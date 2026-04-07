@@ -1,6 +1,6 @@
 // Token definitions and types for the swap app
 
-export type TokenSymbol = 'USDC' | 'USDT' | 'ETH' | 'BTC' | 'NEX' | 'DOGE' | 'HYPE';
+export type TokenSymbol = 'USDC' | 'USDT' | 'ETH' | 'BTC' | 'NEX' | 'DOGE' | 'HYPE' | 'USDX';
 
 export interface Token {
   symbol: TokenSymbol;
@@ -97,11 +97,19 @@ export const TOKENS: Record<TokenSymbol, Token> = {
     color: '#FF6B6B',
     decimals: 6,
   },
+  USDX: {
+    symbol: 'USDX',
+    name: 'USDX',
+    icon: '💲',
+    color: '#00B894',
+    decimals: 6,
+  },
 };
 
 export const TOKEN_SWAP_ADDRESS = '0x25811e8Ef43261fC87d12EBe3ad75B2cE3274D5B';
 
 export const TOKEN_CONTRACTS = {
+  NEX: '0x0000000000000000000000000000000000000000',
   ETH: '0x6afaAad5aE59698fC3b20B67c0fD6549efcaE39A',
   BTC: '0x3eC542a8Dc12Fed02a645d9DD14950594Bf31a8b',
   USDC: '0x9586d069a180823D7386cEf01Ec232c7E74F9538',

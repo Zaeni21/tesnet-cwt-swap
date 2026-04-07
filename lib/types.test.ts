@@ -4,9 +4,9 @@ import type { TokenSymbol, SwapTransaction } from './types';
 
 describe('Types and Constants', () => {
   describe('TOKENS', () => {
-    it('should have all 7 tokens defined', () => {
-      const tokenSymbols: TokenSymbol[] = ['USDC', 'USDT', 'ETH', 'BTC', 'NEX', 'DOGE', 'HYPE'];
-      expect(Object.keys(TOKENS)).toHaveLength(7);
+    it('should have all 8 tokens defined', () => {
+      const tokenSymbols: TokenSymbol[] = ['USDC', 'USDT', 'ETH', 'BTC', 'NEX', 'DOGE', 'HYPE', 'USDX'];
+      expect(Object.keys(TOKENS)).toHaveLength(8);
       tokenSymbols.forEach((symbol) => {
         expect(TOKENS[symbol]).toBeDefined();
       });
@@ -34,6 +34,8 @@ describe('Types and Constants', () => {
     });
 
     it('should include all configured token contract addresses', () => {
+ 
+      expect(TOKEN_CONTRACTS.NEX).toBe('0x0000000000000000000000000000000000000000');
       expect(TOKEN_CONTRACTS.ETH).toBe('0x6afaAad5aE59698fC3b20B67c0fD6549efcaE39A');
       expect(TOKEN_CONTRACTS.BTC).toBe('0x3eC542a8Dc12Fed02a645d9DD14950594Bf31a8b');
       expect(TOKEN_CONTRACTS.USDC).toBe('0x9586d069a180823D7386cEf01Ec232c7E74F9538');
