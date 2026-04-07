@@ -3,50 +3,656 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tesnet.cwt.swap - Token Swap App</title>
+    <title>tesnet.cwt.swap - The Layer 1 for Token Exchange</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: linear-gradient(135deg, #0a7ea4 0%, #0d5a7a 100%); min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .container { max-width: 600px; width: 100%; background: white; border-radius: 24px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
-        .logo { font-size: 64px; margin-bottom: 20px; }
-        h1 { font-size: 32px; color: #11181C; margin-bottom: 10px; }
-        .subtitle { font-size: 16px; color: #687076; margin-bottom: 30px; }
-        .description { font-size: 14px; color: #687076; line-height: 1.6; margin-bottom: 30px; text-align: left; }
-        .features { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; text-align: left; }
-        .feature { padding: 15px; background: #f5f5f5; border-radius: 12px; font-size: 13px; }
-        .feature-icon { font-size: 20px; margin-bottom: 8px; }
-        .feature-title { font-weight: 600; color: #11181C; margin-bottom: 4px; }
-        .feature-desc { color: #687076; font-size: 12px; }
-        .buttons { display: flex; gap: 12px; flex-direction: column; }
-        .btn { padding: 12px 24px; border-radius: 12px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; }
-        .btn-primary { background: #0a7ea4; color: white; }
-        .btn-primary:hover { background: #0d5a7a; transform: translateY(-2px); }
-        .btn-secondary { background: #E5E7EB; color: #11181C; border: 1px solid #D1D5DB; }
-        .btn-secondary:hover { background: #D1D5DB; }
-        .info { margin-top: 30px; padding-top: 30px; border-top: 1px solid #E5E7EB; font-size: 12px; color: #687076; }
-        @media (max-width: 600px) { .container { padding: 30px 20px; } h1 { font-size: 24px; } .features { grid-template-columns: 1fr; } }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary-bg: #0a0a0a;
+            --secondary-bg: #1a1a1a;
+            --accent-green: #00ff00;
+            --accent-yellow: #ffff00;
+            --accent-red: #ff0000;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #333333;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Courier New', monospace;
+            background: var(--primary-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, 0.03) 25%, rgba(0, 255, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.03) 75%, rgba(0, 255, 0, 0.03) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, 0.03) 25%, rgba(0, 255, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.03) 75%, rgba(0, 255, 0, 0.03) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .wrapper {
+            position: relative;
+            z-index: 2;
+        }
+        
+        header {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+        }
+        
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: var(--accent-green);
+            text-transform: uppercase;
+        }
+        
+        .logo span {
+            color: var(--accent-yellow);
+        }
+        
+        nav {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+        
+        nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        nav a:hover {
+            color: var(--accent-green);
+        }
+        
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent-green);
+            transition: width 0.3s ease;
+        }
+        
+        nav a:hover::after {
+            width: 100%;
+        }
+        
+        .cta-btn {
+            padding: 10px 20px;
+            background: transparent;
+            border: 2px solid var(--accent-green);
+            color: var(--accent-green);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .cta-btn:hover {
+            background: var(--accent-green);
+            color: var(--primary-bg);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 255, 0, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(30px); }
+        }
+        
+        .hero-content {
+            max-width: 800px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .hero h1 {
+            font-size: 64px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+            letter-spacing: -1px;
+        }
+        
+        .hero h1 .highlight {
+            color: var(--accent-green);
+        }
+        
+        .hero p {
+            font-size: 18px;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            line-height: 1.8;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: 2px solid;
+            background: transparent;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary {
+            border-color: var(--accent-green);
+            color: var(--accent-green);
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: var(--accent-green);
+            transition: left 0.3s ease;
+            z-index: -1;
+        }
+        
+        .btn-primary:hover::before {
+            left: 0;
+        }
+        
+        .btn-primary:hover {
+            color: var(--primary-bg);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+        }
+        
+        .btn-secondary {
+            border-color: var(--text-secondary);
+            color: var(--text-secondary);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--accent-yellow);
+            color: var(--accent-yellow);
+        }
+        
+        .stats {
+            padding: 80px 40px;
+            background: var(--secondary-bg);
+            border-top: 1px dashed var(--accent-green);
+            border-bottom: 1px dashed var(--accent-green);
+        }
+        
+        .stats-grid {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 40px;
+        }
+        
+        .stat-item {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .stat-item:hover {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.1);
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: 700;
+            color: var(--accent-green);
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .features {
+            padding: 80px 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .section-title {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 60px;
+            text-align: center;
+            letter-spacing: -1px;
+        }
+        
+        .section-title .highlight {
+            color: var(--accent-green);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 40px;
+            margin-bottom: 80px;
+        }
+        
+        .feature-card {
+            padding: 40px;
+            background: var(--secondary-bg);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent-green), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--accent-green);
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.1);
+        }
+        
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+        
+        .feature-icon {
+            font-size: 32px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: var(--accent-green);
+        }
+        
+        .feature-card p {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+        
+        .steps {
+            padding: 80px 40px;
+            background: var(--secondary-bg);
+            border-top: 1px dashed var(--accent-green);
+        }
+        
+        .steps-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-top: 60px;
+        }
+        
+        .step {
+            text-align: center;
+            padding: 30px;
+            border: 2px dashed var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .step:hover {
+            border-color: var(--accent-green);
+            background: rgba(0, 255, 0, 0.05);
+        }
+        
+        .step-number {
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--accent-yellow);
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .step h4 {
+            font-size: 14px;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .step p {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .cta-section {
+            padding: 80px 40px;
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .cta-section h2 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: -1px;
+        }
+        
+        .cta-section p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            line-height: 1.8;
+        }
+        
+        footer {
+            padding: 40px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+        
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: var(--accent-green);
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            nav {
+                gap: 15px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .hero {
+                padding: 40px 20px;
+                min-height: 80vh;
+            }
+            
+            .hero h1 {
+                font-size: 36px;
+            }
+            
+            .hero p {
+                font-size: 14px;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .section-title {
+                font-size: 32px;
+            }
+            
+            .stats {
+                padding: 40px 20px;
+            }
+            
+            .features {
+                padding: 40px 20px;
+            }
+            
+            .steps {
+                padding: 40px 20px;
+            }
+            
+            .cta-section {
+                padding: 40px 20px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">⇅</div>
-        <h1>tesnet.cwt.swap</h1>
-        <p class="subtitle">Token Swap Application</p>
-        <p class="description">A modern mobile app for swapping tokens on a local blockchain simulation. Built with Expo, React Native, and TypeScript.</p>
-        <div class="features">
-            <div class="feature"><div class="feature-icon">🔄</div><div class="feature-title">Token Swap</div><div class="feature-desc">Exchange 7 different tokens instantly</div></div>
-            <div class="feature"><div class="feature-icon">📊</div><div class="feature-title">History</div><div class="feature-desc">Track all your transactions</div></div>
-            <div class="feature"><div class="feature-icon">⚡</div><div class="feature-title">Real-time Quotes</div><div class="feature-desc">Get instant exchange rates</div></div>
-            <div class="feature"><div class="feature-icon">🎨</div><div class="feature-title">Modern UI</div><div class="feature-desc">Beautiful & responsive design</div></div>
-        </div>
-        <div class="buttons">
-            <a href="/app.html" class="btn btn-primary">Launch App</a>
-            <a href="https://github.com/Zaeni21/tesnet-cwt-swap" class="btn btn-secondary">View on GitHub</a>
-        </div>
-        <div class="info">
-            <p><strong>Supported Tokens:</strong> USDC, USDT, ETH, BTC, NEX, DOGE, HYPE</p>
-            <p style="margin-top: 10px;">🚀 Built with Expo 54 • React Native 0.81 • TypeScript 5.9</p>
-        </div>
+    <div class="wrapper">
+        <!-- Header -->
+        <header>
+            <div class="logo">NEXUS <span>SWAP</span></div>
+            <nav>
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="app.html" class="cta-btn">Launch App</a>
+            </nav>
+        </header>
+        
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>The Layer 1 for <span class="highlight">Token Exchange</span></h1>
+                <p>Help power the blockchain purpose-built for intelligent markets and high-performance token swaps. Experience verifiable finance with zero compromise.</p>
+                <div class="hero-buttons">
+                    <a href="app.html" class="btn btn-primary">Launch Exchange</a>
+                    <a href="#features" class="btn btn-secondary">Learn More</a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Stats Section -->
+        <section class="stats">
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number">7</div>
+                    <div class="stat-label">Supported Tokens</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">∞</div>
+                    <div class="stat-label">Liquidity Pools</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">0ms</div>
+                    <div class="stat-label">Latency</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">100%</div>
+                    <div class="stat-label">Verifiable</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Features Section -->
+        <section class="features" id="features">
+            <h2 class="section-title">Why <span class="highlight">NEXUS SWAP</span></h2>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Lightning Fast</h3>
+                    <p>Execute swaps in milliseconds with our optimized Layer 1 architecture. Experience the speed of verifiable finance.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🔐</div>
+                    <h3>Cryptographically Secure</h3>
+                    <p>Every transaction is guaranteed by mathematical proof. No intermediaries, no trust required.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">💱</div>
+                    <h3>Multi-Token Support</h3>
+                    <p>Swap between NEX, ETH, BTC, USDC, USDT, DOGE, and HYPE with real-time pricing.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Real-Time Quotes</h3>
+                    <p>Get instant exchange rates powered by the Nexus Layer 1 blockchain.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">🌍</div>
+                    <h3>Global Access</h3>
+                    <p>Trade from anywhere in the world with no geographic restrictions or intermediaries.</p>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-icon">✨</div>
+                    <h3>Verifiable Finance</h3>
+                    <p>Transactions and computations guaranteed by cryptographic proof for complete transparency.</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- How It Works Section -->
+        <section class="steps" id="how-it-works">
+            <div class="steps-container">
+                <h2 class="section-title">How It <span class="highlight">Works</span></h2>
+                
+                <div class="steps-grid">
+                    <div class="step">
+                        <div class="step-number">01</div>
+                        <h4>Connect Wallet</h4>
+                        <p>Connect your MetaMask wallet to the Nexus testnet in one click.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">02</div>
+                        <h4>Select Tokens</h4>
+                        <p>Choose the tokens you want to swap from and to.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">03</div>
+                        <h4>Get Quote</h4>
+                        <p>Receive real-time pricing powered by the Layer 1.</p>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">04</div>
+                        <h4>Execute Swap</h4>
+                        <p>Complete your transaction with cryptographic verification.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <h2>Ready to Experience Verifiable Finance?</h2>
+            <p>Join thousands of traders and developers building the future of decentralized exchange on Nexus Layer 1.</p>
+            <a href="app.html" class="btn btn-primary">Launch Exchange Now</a>
+        </section>
+        
+        <!-- Footer -->
+        <footer>
+            <div class="footer-links">
+                <a href="#">Docs</a>
+                <a href="#">GitHub</a>
+                <a href="#">Discord</a>
+                <a href="#">Twitter</a>
+                <a href="#">Privacy</a>
+            </div>
+            <p>&copy; 2026 NEXUS SWAP. Built on Nexus Layer 1 for Verifiable Finance.</p>
+        </footer>
     </div>
 </body>
 </html>
