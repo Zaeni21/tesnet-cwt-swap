@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>tesnet.cwt.swap - Interactive Token Swap</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a7ea4 0%, #0d5a7a 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            padding-top: 20px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #E5E7EB;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            color: #687076;
+            transition: all 0.3s ease;
+        }
+        
+        .tab-btn.active {
+            color: #0a7ea4;
+            border-bottom-color: #0a7ea4;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .swap-section {
+            margin-bottom: 20px;
+        }
+        
+        .swap-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #687076;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .token-selector {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 12px;
+        }
+        
+        .token-selector:hover {
+            background: #E5E7EB;
+        }
+        
+        .token-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .token-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .token-details h3 {
+            font-size: 14px;
+            color: #11181C;
+            margin-bottom: 2px;
+        }
+        
+        .token-details p {
+            font-size: 12px;
+            color: #687076;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .amount-input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .amount-input:focus {
+            outline: none;
+            border-color: #0a7ea4;
+            box-shadow: 0 0 0 3px rgba(10, 126, 164, 0.1);
+        }
+        
+        .max-btn {
+            padding: 8px 12px;
+            background: #0a7ea4;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .max-btn:hover {
+            background: #0d5a7a;
+        }
+        
+        .swap-arrow {
+            text-align: center;
+            margin: 16px 0;
+        }
+        
+        .swap-arrow button {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #0a7ea4;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        
+        .swap-arrow button:hover {
+            background: #0d5a7a;
+            transform: scale(1.1);
+        }
+        
+        .you-receive {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .you-receive-label {
+            font-size: 12px;
+            color: #687076;
+            margin-bottom: 8px;
+        }
+        
+        .you-receive-amount {
+            font-size: 24px;
+            font-weight: 700;
+            color: #11181C;
+        }
+        
+        .button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .button-primary {
+            background: #0a7ea4;
+            color: white;
+        }
+        
+        .button-primary:hover:not(:disabled) {
+            background: #0d5a7a;
+            transform: translateY(-2px);
+        }
+        
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .history-item {
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-info h4 {
+            font-size: 14px;
+            color: #11181C;
+            margin-bottom: 4px;
+        }
+        
+        .history-info p {
+            font-size: 12px;
+            color: #687076;
+        }
+        
+        .history-amount {
+            text-align: right;
+        }
+        
+        .history-amount p {
+            font-size: 14px;
+            font-weight: 600;
+            color: #11181C;
+            margin-bottom: 4px;
+        }
+        
+        .history-amount span {
+            font-size: 12px;
+            color: #687076;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #687076;
+        }
+        
+        .empty-state p {
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            display: none;
+        }
+        
+        .status.success {
+            background: #D1FAE5;
+            color: #065F46;
+            display: block;
+        }
+        
+        .status.error {
+            background: #FEE2E2;
+            color: #991B1B;
+            display: block;
+        }
+        
+        .status.loading {
+            background: #DBEAFE;
+            color: #1E40AF;
+            display: block;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            max-width: 400px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #11181C;
+        }
+        
+        .modal-close {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #687076;
+        }
+        
+        .token-option {
+            padding: 12px;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .token-option:hover {
+            background: #f5f5f5;
+            border-color: #0a7ea4;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #E5E7EB;
+            border-top-color: #0a7ea4;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⇅ tesnet.cwt.swap</h1>
+            <p>Token Swap Exchange</p>
+        </div>
+        
+        <div class="card">
+            <div class="tabs">
+                <button class="tab-btn active" onclick="switchTab('swap')">Swap</button>
+                <button class="tab-btn" onclick="switchTab('history')">History</button>
+            </div>
+            
+            <!-- Swap Tab -->
+            <div id="swap" class="tab-content active">
+                <div id="status" class="status"></div>
+                
+                <div class="swap-section">
+                    <div class="swap-label">From</div>
+                    <div class="token-selector" onclick="openTokenModal('from')">
+                        <div class="token-info">
+                            <div class="token-icon" id="fromIcon" style="background: #9945FF;">N</div>
+                            <div class="token-details">
+                                <h3>Send</h3>
+                                <p id="fromToken">NEX</p>
+                            </div>
+                        </div>
+                        <span>→</span>
+                    </div>
+                    
+                    <div class="input-group">
+                        <input type="number" id="fromAmount" class="amount-input" placeholder="0.00" min="0" step="0.01" oninput="updateQuote()">
+                        <button class="max-btn" onclick="setMaxAmount()">Max</button>
+                    </div>
+                </div>
+                
+                <div class="swap-arrow">
+                    <button onclick="swapTokens()">⇅</button>
+                </div>
+                
+                <div class="swap-section">
+                    <div class="swap-label">To</div>
+                    <div class="token-selector" onclick="openTokenModal('to')">
+                        <div class="token-info">
+                            <div class="token-icon" id="toIcon" style="background: #627EEA;">E</div>
+                            <div class="token-details">
+                                <h3>Receive</h3>
+                                <p id="toToken">ETH</p>
+                            </div>
+                        </div>
+                        <span>→</span>
+                    </div>
+                </div>
+                
+                <div class="you-receive">
+                    <div class="you-receive-label">You Receive</div>
+                    <div class="you-receive-amount" id="receiveAmount">0.00</div>
+                </div>
+                
+                <button class="button button-primary" onclick="executeSwap()" id="swapBtn">Review Swap</button>
+            </div>
+            
+            <!-- History Tab -->
+            <div id="history" class="tab-content">
+                <div id="historyList"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Token Selector Modal -->
+    <div id="tokenModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeTokenModal()">×</button>
+            <div class="modal-header">Select Token</div>
+            <div id="tokenList"></div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = 'http://127.0.0.1:3000';
+        const TOKENS = {
+            NEX: { name: 'Nexus', color: '#9945FF', icon: 'N' },
+            ETH: { name: 'Ethereum', color: '#627EEA', icon: 'E' },
+            BTC: { name: 'Bitcoin', color: '#F7931A', icon: 'B' },
+            USDC: { name: 'USD Coin', color: '#2775CA', icon: 'U' },
+            USDT: { name: 'Tether', color: '#26A17B', icon: 'T' },
+            DOGE: { name: 'Dogecoin', color: '#BA9F33', icon: 'D' },
+            HYPE: { name: 'Hype', color: '#FF6B6B', icon: 'H' }
+        };
+        
+        let state = {
+            fromToken: 'NEX',
+            toToken: 'ETH',
+            fromAmount: 0,
+            toAmount: 0,
+            history: [],
+            currentModal: null
+        };
+        
+        // Load history from localStorage
+        function loadHistory() {
+            const saved = localStorage.getItem('swapHistory');
+            state.history = saved ? JSON.parse(saved) : [];
+            renderHistory();
+        }
+        
+        // Save history to localStorage
+        function saveHistory() {
+            localStorage.setItem('swapHistory', JSON.stringify(state.history));
+        }
+        
+        // Switch tabs
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tab === 'history') {
+                loadHistory();
+            }
+        }
+        
+        // Update quote
+        async function updateQuote() {
+            const amount = parseFloat(document.getElementById('fromAmount').value) || 0;
+            if (amount <= 0) {
+                document.getElementById('receiveAmount').textContent = '0.00';
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/rate?in=${state.fromToken}&out=${state.toToken}&amount=${amount}`);
+                const data = await response.json();
+                state.toAmount = data.amount_out;
+                document.getElementById('receiveAmount').textContent = data.amount_out.toFixed(2);
+            } catch (error) {
+                console.error('Error fetching quote:', error);
+                showStatus('Error fetching quote', 'error');
+            }
+        }
+        
+        // Swap tokens
+        function swapTokens() {
+            const temp = state.fromToken;
+            state.fromToken = state.toToken;
+            state.toToken = temp;
+            
+            updateTokenDisplay();
+            updateQuote();
+        }
+        
+        // Update token display
+        function updateTokenDisplay() {
+            document.getElementById('fromToken').textContent = state.fromToken;
+            document.getElementById('toToken').textContent = state.toToken;
+            
+            const fromToken = TOKENS[state.fromToken];
+            const toToken = TOKENS[state.toToken];
+            
+            document.getElementById('fromIcon').style.background = fromToken.color;
+            document.getElementById('fromIcon').textContent = fromToken.icon;
+            
+            document.getElementById('toIcon').style.background = toToken.color;
+            document.getElementById('toIcon').textContent = toToken.icon;
+        }
+        
+        // Open token modal
+        function openTokenModal(type) {
+            state.currentModal = type;
+            const tokenList = document.getElementById('tokenList');
+            tokenList.innerHTML = '';
+            
+            Object.entries(TOKENS).forEach(([symbol, token]) => {
+                const div = document.createElement('div');
+                div.className = 'token-option';
+                div.innerHTML = `
+                    <div class="token-icon" style="background: ${token.color}; width: 40px; height: 40px;">${token.icon}</div>
+                    <div>
+                        <div style="font-weight: 600; color: #11181C;">${symbol}</div>
+                        <div style="font-size: 12px; color: #687076;">${token.name}</div>
+                    </div>
+                `;
+                div.onclick = () => selectToken(symbol, type);
+                tokenList.appendChild(div);
+            });
+            
+            document.getElementById('tokenModal').classList.add('active');
+        }
+        
+        // Select token
+        function selectToken(symbol, type) {
+            if (type === 'from') {
+                state.fromToken = symbol;
+            } else {
+                state.toToken = symbol;
+            }
+            
+            updateTokenDisplay();
+            updateQuote();
+            closeTokenModal();
+        }
+        
+        // Close token modal
+        function closeTokenModal() {
+            document.getElementById('tokenModal').classList.remove('active');
+        }
+        
+        // Set max amount
+        function setMaxAmount() {
+            document.getElementById('fromAmount').value = '100';
+            updateQuote();
+        }
+        
+        // Execute swap
+        async function executeSwap() {
+            const amount = parseFloat(document.getElementById('fromAmount').value);
+            
+            if (amount <= 0) {
+                showStatus('Please enter an amount', 'error');
+                return;
+            }
+            
+            if (state.fromToken === state.toToken) {
+                showStatus('Please select different tokens', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('swapBtn');
+            btn.disabled = true;
+            showStatus('Processing swap...', 'loading');
+            
+            try {
+                const response = await fetch(`${API_URL}/transaction`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        Swap: {
+                            account: 0,
+                            in_token: state.fromToken,
+                            out_token: state.toToken,
+                            amount: amount
+                        }
+                    })
+                });
+                
+                if (response.ok) {
+                    const transaction = {
+                        id: Date.now(),
+                        fromToken: state.fromToken,
+                        toToken: state.toToken,
+                        fromAmount: amount,
+                        toAmount: state.toAmount,
+                        timestamp: new Date().toLocaleString(),
+                        status: 'success'
+                    };
+                    
+                    state.history.unshift(transaction);
+                    saveHistory();
+                    
+                    showStatus(`Swap successful! You received ${state.toAmount.toFixed(2)} ${state.toToken}`, 'success');
+                    document.getElementById('fromAmount').value = '';
+                    document.getElementById('receiveAmount').textContent = '0.00';
+                } else {
+                    showStatus('Swap failed. Please try again.', 'error');
+                }
+            } catch (error) {
+                console.error('Error executing swap:', error);
+                showStatus('Error executing swap', 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        
+        // Show status message
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = message;
+            statusEl.className = `status ${type}`;
+            
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    statusEl.className = 'status';
+                }, 5000);
+            }
+        }
+        
+        // Render history
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            
+            if (state.history.length === 0) {
+                historyList.innerHTML = '<div class="empty-state"><p>No transactions yet</p><p>Start swapping to see your history</p></div>';
+                return;
+            }
+            
+            historyList.innerHTML = state.history.map(tx => `
+                <div class="history-item">
+                    <div class="history-info">
+                        <h4>${tx.fromToken} → ${tx.toToken}</h4>
+                        <p>${tx.timestamp}</p>
+                    </div>
+                    <div class="history-amount">
+                        <p>-${tx.fromAmount.toFixed(2)}</p>
+                        <span>+${tx.toAmount.toFixed(2)}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Initialize
+        updateTokenDisplay();
+        loadHistory();
+        
+        // Close modal when clicking outside
+        document.getElementById('tokenModal').addEventListener('click', (e) => {
+            if (e.target.id === 'tokenModal') {
+                closeTokenModal();
+            }
+        });
+    </script>
+</body>
+</html>
