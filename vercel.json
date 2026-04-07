@@ -1,25 +1,5 @@
 {
-  "buildCommand": "pnpm build",
-  "outputDirectory": "dist",
-  "installCommand": "pnpm install",
-  "env": {
-    "EXPO_PUBLIC_API_URL": "http://127.0.0.1:3000"
-  },
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600, s-maxage=3600"
-        }
-      ]
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/:path*",
-      "destination": "/index.html"
-    }
-  ]
+  "buildCommand": "echo 'Static build'",
+  "outputDirectory": "public",
+  "installCommand": "echo 'No install needed'"
 }
