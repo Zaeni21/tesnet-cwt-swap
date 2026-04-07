@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>tesnet.cwt.swap - Interactive Token Swap</title>
-    <script async src="https://cdn.jsdelivr.net/npm/@privy-io/js-sdk-core"></script>
+    <script src="https://cdn.ethers.io/lib/ethers-5.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -74,6 +74,11 @@
         .wallet-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .wallet-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
         
         .card {
@@ -419,20 +424,6 @@
             background: #f5f5f5;
             border-color: #0a7ea4;
         }
-        
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #E5E7EB;
-            border-top-color: #0a7ea4;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
     </style>
 </head>
 <body>
@@ -529,7 +520,6 @@
     
     <script>
         const RPC_URL = 'https://testnet.rpc.nexus.xyz';
-        const PRIVY_APP_ID = 'cmnojdb6b00cr0cl2n1f0nryl';
         const API_URL = 'http://127.0.0.1:3000';
         
         const TOKENS = {
@@ -550,49 +540,79 @@
             history: [],
             currentModal: null,
             walletConnected: false,
-            userAddress: null
+            userAddress: null,
+            provider: null,
+            signer: null
         };
         
-        // Initialize Privy
-        async function initPrivy() {
+        // Initialize ethers provider
+        async function initProvider() {
             try {
-                if (window.Privy) {
-                    window.privy = new window.Privy({
-                        appId: PRIVY_APP_ID
-                    });
-                    console.log('Privy initialized');
+                if (window.ethers) {
+                    state.provider = new ethers.providers.JsonRpcProvider(RPC_URL);
+                    console.log('Provider initialized with RPC:', RPC_URL);
                 }
             } catch (error) {
-                console.error('Error initializing Privy:', error);
+                console.error('Error initializing provider:', error);
             }
         }
         
         // Connect Wallet
         async function connectWallet() {
             try {
-                if (!window.privy) {
-                    showStatus('Privy SDK not loaded. Please refresh the page.', 'error');
-                    return;
-                }
-                
-                // Try to connect wallet using Privy
-                const user = await window.privy.login();
-                
-                if (user && user.wallet) {
-                    state.walletConnected = true;
-                    state.userAddress = user.wallet.address;
-                    updateWalletDisplay();
-                    showStatus(`Wallet connected: ${user.wallet.address.substring(0, 6)}...${user.wallet.address.substring(38)}`, 'success');
+                // Check if MetaMask is installed
+                if (typeof window.ethereum !== 'undefined') {
+                    try {
+                        // Request account access
+                        const accounts = await window.ethereum.request({ 
+                            method: 'eth_requestAccounts' 
+                        });
+                        
+                        if (accounts && accounts.length > 0) {
+                            state.walletConnected = true;
+                            state.userAddress = accounts[0];
+                            
+                            // Try to switch to Nexus testnet
+                            try {
+                                await window.ethereum.request({
+                                    method: 'wallet_switchEthereumChain',
+                                    params: [{ chainId: '0xf69' }] // 3945 in hex
+                                });
+                            } catch (switchError) {
+                                if (switchError.code === 4902) {
+                                    // Chain not added, try to add it
+                                    await window.ethereum.request({
+                                        method: 'wallet_addEthereumChain',
+                                        params: [{
+                                            chainId: '0xf69',
+                                            chainName: 'Nexus Testnet',
+                                            rpcUrls: [RPC_URL],
+                                            blockExplorerUrls: ['https://testnet.explorer.nexus.xyz/']
+                                        }]
+                                    });
+                                }
+                            }
+                            
+                            updateWalletDisplay();
+                            showStatus(`Wallet connected: ${state.userAddress.substring(0, 6)}...${state.userAddress.substring(38)}`, 'success');
+                        }
+                    } catch (error) {
+                        if (error.code === 4001) {
+                            showStatus('User rejected wallet connection', 'error');
+                        } else {
+                            throw error;
+                        }
+                    }
                 } else {
-                    showStatus('Failed to connect wallet', 'error');
+                    // MetaMask not installed, use demo mode
+                    state.walletConnected = true;
+                    state.userAddress = '0x' + Math.random().toString(16).slice(2, 42);
+                    updateWalletDisplay();
+                    showStatus('Demo wallet connected (MetaMask not detected)', 'success');
                 }
             } catch (error) {
                 console.error('Wallet connection error:', error);
-                // Fallback: simulate wallet connection for demo
-                state.walletConnected = true;
-                state.userAddress = '0x' + Math.random().toString(16).slice(2, 42);
-                updateWalletDisplay();
-                showStatus('Demo wallet connected (local simulation)', 'success');
+                showStatus('Error connecting wallet: ' + error.message, 'error');
             }
         }
         
@@ -841,7 +861,7 @@
         // Initialize
         updateTokenDisplay();
         loadHistory();
-        initPrivy();
+        initProvider();
         
         // Close modal when clicking outside
         document.getElementById('tokenModal').addEventListener('click', (e) => {
