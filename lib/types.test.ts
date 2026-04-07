@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TOKENS, ACCOUNT_ID, API_BASE_URL } from './types';
+import { TOKENS, ACCOUNT_ID, API_BASE_URL, TOKEN_SWAP_ADDRESS, TOKEN_CONTRACTS } from './types';
 import type { TokenSymbol, SwapTransaction } from './types';
 
 describe('Types and Constants', () => {
@@ -25,6 +25,22 @@ describe('Types and Constants', () => {
       const colors = Object.values(TOKENS).map((token) => token.color);
       const uniqueColors = new Set(colors);
       expect(uniqueColors.size).toBe(colors.length);
+    });
+  });
+
+  describe('Contract addresses', () => {
+    it('should have the configured TokenSwap contract address', () => {
+      expect(TOKEN_SWAP_ADDRESS).toBe('0x25811e8Ef43261fC87d12EBe3ad75B2cE3274D5B');
+    });
+
+    it('should include all configured token contract addresses', () => {
+      expect(TOKEN_CONTRACTS.ETH).toBe('0x6afaAad5aE59698fC3b20B67c0fD6549efcaE39A');
+      expect(TOKEN_CONTRACTS.BTC).toBe('0x3eC542a8Dc12Fed02a645d9DD14950594Bf31a8b');
+      expect(TOKEN_CONTRACTS.USDC).toBe('0x9586d069a180823D7386cEf01Ec232c7E74F9538');
+      expect(TOKEN_CONTRACTS.USDT).toBe('0xf88baD145FE915F3cFB6f62b3fd3fe7Ce9eEd91d');
+      expect(TOKEN_CONTRACTS.DOGE).toBe('0x476bF1510AD9cCbf9F4c05fE7E05a3Ce59Cb11Bc');
+      expect(TOKEN_CONTRACTS.HYPE).toBe('0x72eAd33588f911422C6Ecb14f39F133Ed20aE1Bf');
+      expect(TOKEN_CONTRACTS.USDX).toBe('0x9658B23835BCc7E16d4CaE49a14167547dE54130');
     });
   });
 
