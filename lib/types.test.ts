@@ -34,6 +34,7 @@ describe('Types and Constants', () => {
     });
 
     it('should include all configured token contract addresses', () => {
+ 
       expect(TOKEN_CONTRACTS.NEX).toBe('0x0000000000000000000000000000000000000000');
       expect(TOKEN_CONTRACTS.ETH).toBe('0x6afaAad5aE59698fC3b20B67c0fD6549efcaE39A');
       expect(TOKEN_CONTRACTS.BTC).toBe('0x3eC542a8Dc12Fed02a645d9DD14950594Bf31a8b');
