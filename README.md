@@ -416,7 +416,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 For issues, questions, or suggestions:
 
 - **GitHub Issues:** [Create an issue](https://github.com/Zaeni21/tesnet-cwt-swap/issues)
-- **Email:** [contact@example.com](mailto:zaeni2000@gmail.com)
+- **Email:** [zaeni2000@gmail.com](mailto:zaeni2000@gmail.com)
 - **Discord:** [Join our community](soon)
 
 ## Acknowledgments
