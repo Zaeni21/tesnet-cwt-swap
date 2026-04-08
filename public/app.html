@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nexus Token Exchange</title>
+<title>tesnet.cwt.swap - App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0d14;
-    --surface: #111520;
-    --surface2: #171c2e;
-    --border: #1e2640;
-    --border2: #2a3354;
-    --accent: #4f6ef7;
-    --accent2: #7c5cfc;
-    --green: #22d3a0;
-    --red: #f4504a;
-    --text: #e8ecf8;
-    --muted: #6b7599;
-    --muted2: #8b96be;
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1a1a1a;
+    --border: #333333;
+    --border2: #4a4a4a;
+    --accent: #00ff00;
+    --accent2: #bdff00;
+    --green: #00ff00;
+    --red: #ff5c5c;
+    --text: #ffffff;
+    --muted: #8a8a8a;
+    --muted2: #b0b0b0;
     --mono: 'Space Mono', monospace;
-    --sans: 'DM Sans', sans-serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Courier New', monospace;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,6 +34,19 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, 0.03) 25%, rgba(0, 255, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.03) 75%, rgba(0, 255, 0, 0.03) 76%, transparent 77%, transparent),
+      linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, 0.03) 25%, rgba(0, 255, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.03) 75%, rgba(0, 255, 0, 0.03) 76%, transparent 77%, transparent);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
   }
 
   /* NAV */
@@ -44,7 +57,7 @@
     justify-content: space-between;
     padding: 16px 24px;
     border-bottom: 1px solid var(--border);
-    background: rgba(10,13,20,0.95);
+    background: rgba(10,10,10,0.95);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -69,18 +82,23 @@
     letter-spacing: 1px;
   }
   #connectBtn {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    color: #fff;
+    background: transparent;
+    border: 2px solid var(--accent);
+    color: var(--accent);
     font-family: var(--sans);
     font-size: 13px;
     font-weight: 600;
     padding: 8px 18px;
-    border-radius: 8px;
+    border-radius: 4px;
     cursor: pointer;
     transition: opacity 0.15s, transform 0.1s;
   }
-  #connectBtn:hover { opacity: 0.88; transform: translateY(-1px); }
+  #connectBtn:hover {
+    background: var(--accent);
+    color: var(--bg);
+    opacity: 1;
+    transform: translateY(-1px);
+  }
   #connectBtn.connected {
     background: var(--surface2);
     border: 1px solid var(--border2);
@@ -94,8 +112,10 @@
   main {
     flex: 1;
     width: 100%;
-    max-width: 480px;
+    max-width: 560px;
     padding: 32px 16px 60px;
+    position: relative;
+    z-index: 1;
   }
 
   /* STATUS BAR */
@@ -286,8 +306,9 @@
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff;
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
     letter-spacing: 0.3px;
     margin-top: 6px;
   }
@@ -297,7 +318,12 @@
     cursor: not-allowed;
     border: 1px solid var(--border);
   }
-  #swapBtn:not(:disabled):hover { opacity: 0.9; transform: translateY(-1px); }
+  #swapBtn:not(:disabled):hover {
+    opacity: 1;
+    transform: translateY(-1px);
+    background: var(--accent);
+    color: var(--bg);
+  }
   #swapBtn:not(:disabled):active { transform: scale(0.99); }
 
   /* TOKEN MODAL */
@@ -360,69 +386,6 @@
   .token-item-name { font-weight: 600; font-size: 14px; }
   .token-item-full { font-size: 12px; color: var(--muted); }
   .token-item-bal { font-family: var(--mono); font-size: 13px; color: var(--muted2); }
-
-  /* CONFIRM MODAL */
-  #confirmModal {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.7);
-    z-index: 1001;
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(4px);
-    padding: 16px;
-  }
-  #confirmModal.open { display: flex; }
-  .confirm-card {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 20px;
-    padding: 24px;
-    width: 100%;
-    max-width: 380px;
-    animation: fadeIn 0.2s ease;
-  }
-  @keyframes fadeIn { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
-  .confirm-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
-  .confirm-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 14px;
-  }
-  .confirm-row:last-of-type { border-bottom: none; }
-  .confirm-row .label { color: var(--muted); }
-  .confirm-row .val { font-family: var(--mono); font-weight: 700; }
-  .confirm-row .val.green { color: var(--green); }
-  .confirm-btns { display: flex; gap: 10px; margin-top: 20px; }
-  .btn-cancel {
-    flex: 1; padding: 13px;
-    background: var(--surface2);
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    color: var(--muted2);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: var(--sans);
-    transition: all 0.15s;
-  }
-  .btn-cancel:hover { color: var(--text); border-color: var(--border); }
-  .btn-confirm {
-    flex: 1; padding: 13px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    border-radius: 10px;
-    color: #fff;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: var(--sans);
-    transition: opacity 0.15s;
-  }
-  .btn-confirm:hover { opacity: 0.88; }
 
   /* HISTORY */
   #historyPanel { display: none; }
@@ -529,7 +492,7 @@
 <body>
 
 <nav>
-  <div class="logo">⬡ NEXUS SWAP</div>
+  <div class="logo">tesnet.<span style="color:var(--accent2)">cwt</span>.swap</div>
   <div class="nav-right">
     <div class="testnet-badge">TESTNET</div>
     <button id="connectBtn" onclick="toggleConnect()">Connect Wallet</button>
@@ -612,7 +575,7 @@
         <button class="slip-btn" id="slip3" onclick="setSlippage(3)">3%</button>
       </div>
 
-      <button id="swapBtn" disabled onclick="openConfirm()">Connect Wallet</button>
+      <button id="swapBtn" disabled onclick="executeSwap()">Connect Wallet</button>
     </div>
   </div>
 
@@ -630,22 +593,6 @@
       <div class="modal-close" onclick="closeModal()">×</div>
     </div>
     <div class="token-list" id="tokenList"></div>
-  </div>
-</div>
-
-<!-- CONFIRM MODAL -->
-<div id="confirmModal">
-  <div class="confirm-card">
-    <div class="confirm-title">Confirm Swap</div>
-    <div class="confirm-row"><span class="label">You Send</span><span class="val" id="cfSend"></span></div>
-    <div class="confirm-row"><span class="label">You Receive</span><span class="val green" id="cfReceive"></span></div>
-    <div class="confirm-row"><span class="label">Exchange Rate</span><span class="val" id="cfRate" style="font-size:12px;color:var(--muted2)"></span></div>
-    <div class="confirm-row"><span class="label">Price Impact</span><span class="val" id="cfImpact" style="font-size:12px;color:var(--muted2)"></span></div>
-    <div class="confirm-row"><span class="label">Slippage</span><span class="val" id="cfSlippage" style="font-size:12px;color:var(--muted2)"></span></div>
-    <div class="confirm-btns">
-      <button class="btn-cancel" onclick="closeConfirm()">Cancel</button>
-      <button class="btn-confirm" id="confirmExecBtn" onclick="executeSwap()">Confirm Swap</button>
-    </div>
   </div>
 </div>
 
@@ -925,24 +872,10 @@ function selectToken(sym) {
   updateRate();
 }
 
-// ── CONFIRM ────────────────────────────────────────────────────────────────────
-function openConfirm() {
-  const amt = parseFloat(document.getElementById('fromAmount').value);
-  const out = parseFloat(document.getElementById('toAmount').value);
-  const result = getRoute(fromToken, toToken, amt);
-  document.getElementById('cfSend').textContent = `${fmt(amt)} ${fromToken}`;
-  document.getElementById('cfReceive').textContent = `${fmt(out)} ${toToken}`;
-  document.getElementById('cfRate').textContent = `1 ${fromToken} = ${fmt(out/amt)} ${toToken}`;
-  document.getElementById('cfImpact').textContent = result ? fmt(result.impact, 3) + '%' : '—';
-  document.getElementById('cfSlippage').textContent = slippage + '%';
-  document.getElementById('confirmModal').classList.add('open');
-}
-
-function closeConfirm() { document.getElementById('confirmModal').classList.remove('open'); }
-
 function executeSwap() {
-  const btn = document.getElementById('confirmExecBtn');
-  btn.innerHTML = '<span class="spinner"></span>Confirming...';
+  const btn = document.getElementById('swapBtn');
+  if (btn.disabled) return;
+  btn.innerHTML = '<span class="spinner"></span>Processing swap...';
   btn.disabled = true;
 
   setTimeout(() => {
@@ -986,12 +919,8 @@ function executeSwap() {
     document.getElementById('fromAmount').value = '';
     document.getElementById('toAmount').value = '';
     updateRate();
-    closeConfirm();
-
-    btn.innerHTML = 'Confirm Swap';
-    btn.disabled = false;
-
     showToast(`Swapped ${fmt(amt)} ${fromToken} → ${fmt(out)} ${toToken}`, 'success');
+    updateSwapBtn();
   }, 1200);
 }
 
@@ -1100,9 +1029,6 @@ updateSwapBtn();
 // Close modal on backdrop click
 document.getElementById('tokenModal').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
-});
-document.getElementById('confirmModal').addEventListener('click', function(e) {
-  if (e.target === this) closeConfirm();
 });
 </script>
 </body>
