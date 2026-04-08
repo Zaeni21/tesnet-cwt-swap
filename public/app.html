@@ -970,54 +970,53 @@ function closeConfirm() {
   document.getElementById('confirmModal').classList.remove('open');
 }
 
+
 async function executeSwap() {
   const btn = document.getElementById('confirmExecBtn');
   const amt = parseFloat(document.getElementById('fromAmount').value);
   const out = parseFloat(document.getElementById('toAmount').value);
+
   if (!amt || !out) return;
 
-  btn.innerHTML = '<span class="spinner"></span>Waiting signature...';
+  btn.innerHTML = '<span class="spinner"></span>Processing...';
   btn.disabled = true;
 
-  let signature = null;
-  if (window.ethereum && walletAddress) {
-    try {
-      const signMsg = `Confirm swap on tesnet.cwt.swap\nSend: ${fmt(amt)} ${fromToken}\nReceive: ${fmt(out)} ${toToken}\nSlippage: ${slippage}%\nTime: ${new Date().toISOString()}`;
-      signature = await window.ethereum.request({
-        method: 'personal_sign',
-        params: [signMsg, walletAddress],
+  let txHash = null;
+
+  try {
+    // ── REAL TX MODE ──
+    if (window.ethereum && walletAddress) {
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
       });
-    } catch (err) {
-      btn.innerHTML = 'Confirm Swap';
-      btn.disabled = false;
-      showToast('Signature rejected in wallet', 'error');
-      return;
-    }
-  }
 
-  btn.innerHTML = '<span class="spinner"></span>Confirming...';
-  setTimeout(() => {
-    // Apply AMM state change (simulate)
-    const result = getRoute(fromToken, toToken, amt);
-    if (result) {
-      const direct = getPool(fromToken, toToken);
-      if (direct) {
-        const { pool, reversed } = direct;
-        if (!reversed) {
-          pool.rA += amt * (1 - FEE);
-          pool.rB -= out;
-        } else {
-          pool.rB += amt * (1 - FEE);
-          pool.rA -= out;
-        }
-      }
+      const from = accounts[0];
+
+      const txParams = {
+        from: from,
+        to: from,
+        value: '0x0',
+        data: '0x',
+      };
+
+      txHash = await window.ethereum.request({
+        method: 'eth_sendTransaction',
+        params: [txParams],
+      });
+
+      showToast('Transaction sent to network', 'success');
+
+    } else {
+      // ── DEMO MODE ──
+      txHash = 'DEMO-' + Math.random().toString(36).substr(2, 9);
+      showToast('Demo swap executed (no wallet)', '');
     }
 
-    // Update balances
+    // update balances (simulation tetap jalan)
     balances[fromToken] -= amt;
     balances[toToken] += out;
 
-    // Save history
+    // save history
     const tx = {
       id: Date.now(),
       from: fromToken,
@@ -1025,22 +1024,27 @@ async function executeSwap() {
       amtIn: amt,
       amtOut: out,
       time: new Date().toISOString(),
-      txHash: '0x' + Math.random().toString(16).substr(2, 40),
-      signature: signature ? signature.slice(0, 14) + '...' : 'demo-mode',
+      txHash: txHash,
     };
-    txHistory.unshift(tx);
-    localStorage.setItem('nexus_history', JSON.stringify(txHistory.slice(0, 50)));
 
-    // Reset UI
+    txHistory.unshift(tx);
+    localStorage.setItem('nexus_history', JSON.stringify(txHistory.slice(0,50)));
+
     document.getElementById('fromAmount').value = '';
     document.getElementById('toAmount').value = '';
     closeConfirm();
+    renderHistory();
+    updateRate();
+
+  } catch (err) {
+    console.error(err);
+    showToast('Transaction failed', 'error');
+  } finally {
     btn.innerHTML = 'Confirm Swap';
     btn.disabled = false;
-    updateRate();
-    showToast(`Swapped ${fmt(amt)} ${fromToken} → ${fmt(out)} ${toToken}`, 'success');
-  }, 1200);
+  }
 }
+
 
 // ── HISTORY ────────────────────────────────────────────────────────────────────
 function renderHistory() {
