@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TOKENS, ACCOUNT_ID, API_BASE_URL, TOKEN_SWAP_ADDRESS, TOKEN_CONTRACTS } from './types';
+import { TOKENS, ACCOUNT_ID, API_BASE_URL, IS_API_BASE_URL_LOCAL, TOKEN_SWAP_ADDRESS, TOKEN_CONTRACTS } from './types';
 import type { TokenSymbol, SwapTransaction } from './types';
 
 describe('Types and Constants', () => {
@@ -49,6 +49,11 @@ describe('Types and Constants', () => {
   describe('Constants', () => {
     it('should have correct API base URL', () => {
       expect(API_BASE_URL).toBe('http://127.0.0.1:3000');
+    });
+
+
+    it('should detect local API URL correctly', () => {
+      expect(IS_API_BASE_URL_LOCAL).toBe(true);
     });
 
     it('should have default account ID', () => {
