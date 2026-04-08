@@ -3,25 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nexus Token Exchange</title>
+<title>tesnet.cwt.swap - App</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0a0d14;
-    --surface: #111520;
-    --surface2: #171c2e;
-    --border: #1e2640;
-    --border2: #2a3354;
-    --accent: #4f6ef7;
-    --accent2: #7c5cfc;
-    --green: #22d3a0;
-    --red: #f4504a;
-    --text: #e8ecf8;
-    --muted: #6b7599;
-    --muted2: #8b96be;
+    --bg: #0a0a0a;
+    --surface: #141414;
+    --surface2: #1a1a1a;
+    --border: #333333;
+    --border2: #4a4a4a;
+    --accent: #00ff00;
+    --accent2: #bdff00;
+    --green: #00ff00;
+    --red: #ff5c5c;
+    --text: #ffffff;
+    --muted: #8a8a8a;
+    --muted2: #b0b0b0;
     --mono: 'Space Mono', monospace;
-    --sans: 'DM Sans', sans-serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Courier New', monospace;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -34,6 +34,19 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, 0.03) 25%, rgba(0, 255, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.03) 75%, rgba(0, 255, 0, 0.03) 76%, transparent 77%, transparent),
+      linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, 0.03) 25%, rgba(0, 255, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.03) 75%, rgba(0, 255, 0, 0.03) 76%, transparent 77%, transparent);
+    background-size: 50px 50px;
+    pointer-events: none;
+    z-index: 0;
   }
 
   /* NAV */
@@ -44,7 +57,7 @@
     justify-content: space-between;
     padding: 16px 24px;
     border-bottom: 1px solid var(--border);
-    background: rgba(10,13,20,0.95);
+    background: rgba(10,10,10,0.95);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -69,18 +82,23 @@
     letter-spacing: 1px;
   }
   #connectBtn {
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
-    color: #fff;
+    background: transparent;
+    border: 2px solid var(--accent);
+    color: var(--accent);
     font-family: var(--sans);
     font-size: 13px;
     font-weight: 600;
     padding: 8px 18px;
-    border-radius: 8px;
+    border-radius: 4px;
     cursor: pointer;
     transition: opacity 0.15s, transform 0.1s;
   }
-  #connectBtn:hover { opacity: 0.88; transform: translateY(-1px); }
+  #connectBtn:hover {
+    background: var(--accent);
+    color: var(--bg);
+    opacity: 1;
+    transform: translateY(-1px);
+  }
   #connectBtn.connected {
     background: var(--surface2);
     border: 1px solid var(--border2);
@@ -94,8 +112,10 @@
   main {
     flex: 1;
     width: 100%;
-    max-width: 480px;
+    max-width: 560px;
     padding: 32px 16px 60px;
+    position: relative;
+    z-index: 1;
   }
 
   /* STATUS BAR */
@@ -286,8 +306,9 @@
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.2s;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: #fff;
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
     letter-spacing: 0.3px;
     margin-top: 6px;
   }
@@ -297,7 +318,12 @@
     cursor: not-allowed;
     border: 1px solid var(--border);
   }
-  #swapBtn:not(:disabled):hover { opacity: 0.9; transform: translateY(-1px); }
+  #swapBtn:not(:disabled):hover {
+    opacity: 1;
+    transform: translateY(-1px);
+    background: var(--accent);
+    color: var(--bg);
+  }
   #swapBtn:not(:disabled):active { transform: scale(0.99); }
 
   /* TOKEN MODAL */
@@ -412,17 +438,17 @@
   .btn-cancel:hover { color: var(--text); border-color: var(--border); }
   .btn-confirm {
     flex: 1; padding: 13px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    border: none;
+    background: transparent;
+    border: 2px solid var(--accent);
     border-radius: 10px;
-    color: #fff;
+    color: var(--accent);
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     font-family: var(--sans);
-    transition: opacity 0.15s;
+    transition: all 0.15s;
   }
-  .btn-confirm:hover { opacity: 0.88; }
+  .btn-confirm:hover { background: var(--accent); color: var(--bg); }
 
   /* HISTORY */
   #historyPanel { display: none; }
@@ -529,7 +555,7 @@
 <body>
 
 <nav>
-  <div class="logo">⬡ NEXUS SWAP</div>
+  <div class="logo">tesnet.<span style="color:var(--accent2)">cwt</span>.swap</div>
   <div class="nav-right">
     <div class="testnet-badge">TESTNET</div>
     <button id="connectBtn" onclick="toggleConnect()">Connect Wallet</button>
@@ -698,6 +724,7 @@ const balances = {
 const FEE = 0.003; // 0.3%
 let slippage = 0.5;
 let walletConnected = false;
+let walletAddress = null;
 let fromToken = 'NEX';
 let toToken = 'ETH';
 let activeModal = null; // 'from' or 'to'
@@ -925,10 +952,10 @@ function selectToken(sym) {
   updateRate();
 }
 
-// ── CONFIRM ────────────────────────────────────────────────────────────────────
 function openConfirm() {
   const amt = parseFloat(document.getElementById('fromAmount').value);
   const out = parseFloat(document.getElementById('toAmount').value);
+  if (!amt || !out) return;
   const result = getRoute(fromToken, toToken, amt);
   document.getElementById('cfSend').textContent = `${fmt(amt)} ${fromToken}`;
   document.getElementById('cfReceive').textContent = `${fmt(out)} ${toToken}`;
@@ -938,17 +965,37 @@ function openConfirm() {
   document.getElementById('confirmModal').classList.add('open');
 }
 
-function closeConfirm() { document.getElementById('confirmModal').classList.remove('open'); }
+function closeConfirm() {
+  document.getElementById('confirmModal').classList.remove('open');
+}
 
-function executeSwap() {
+async function executeSwap() {
   const btn = document.getElementById('confirmExecBtn');
-  btn.innerHTML = '<span class="spinner"></span>Confirming...';
+  const amt = parseFloat(document.getElementById('fromAmount').value);
+  const out = parseFloat(document.getElementById('toAmount').value);
+  if (!amt || !out) return;
+
+  btn.innerHTML = '<span class="spinner"></span>Waiting signature...';
   btn.disabled = true;
 
-  setTimeout(() => {
-    const amt = parseFloat(document.getElementById('fromAmount').value);
-    const out = parseFloat(document.getElementById('toAmount').value);
+  let signature = null;
+  if (window.ethereum && walletAddress) {
+    try {
+      const signMsg = `Confirm swap on tesnet.cwt.swap\nSend: ${fmt(amt)} ${fromToken}\nReceive: ${fmt(out)} ${toToken}\nSlippage: ${slippage}%\nTime: ${new Date().toISOString()}`;
+      signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [signMsg, walletAddress],
+      });
+    } catch (err) {
+      btn.innerHTML = 'Confirm Swap';
+      btn.disabled = false;
+      showToast('Signature rejected in wallet', 'error');
+      return;
+    }
+  }
 
+  btn.innerHTML = '<span class="spinner"></span>Confirming...';
+  setTimeout(() => {
     // Apply AMM state change (simulate)
     const result = getRoute(fromToken, toToken, amt);
     if (result) {
@@ -978,6 +1025,7 @@ function executeSwap() {
       amtOut: out,
       time: new Date().toISOString(),
       txHash: '0x' + Math.random().toString(16).substr(2, 40),
+      signature: signature ? signature.slice(0, 14) + '...' : 'demo-mode',
     };
     txHistory.unshift(tx);
     localStorage.setItem('nexus_history', JSON.stringify(txHistory.slice(0, 50)));
@@ -985,12 +1033,10 @@ function executeSwap() {
     // Reset UI
     document.getElementById('fromAmount').value = '';
     document.getElementById('toAmount').value = '';
-    updateRate();
     closeConfirm();
-
     btn.innerHTML = 'Confirm Swap';
     btn.disabled = false;
-
+    updateRate();
     showToast(`Swapped ${fmt(amt)} ${fromToken} → ${fmt(out)} ${toToken}`, 'success');
   }, 1200);
 }
@@ -1041,6 +1087,7 @@ async function toggleConnect() {
     try {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       const addr = accounts[0];
+      walletAddress = addr;
 
       // Try to switch/add Nexus Testnet (chainId 3945 = 0xF69)
       try {
@@ -1069,6 +1116,7 @@ async function toggleConnect() {
     }
   } else {
     // Simulate connect for demo
+    walletAddress = null;
     connectWallet('0xDemo...SWAP');
     showToast('Demo mode: No wallet detected', '');
   }
