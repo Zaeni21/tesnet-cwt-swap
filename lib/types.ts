@@ -147,4 +147,4 @@ export const BLOCKSCOUT_CHAIN_ID = configuredBlockscoutChainId || '3945';
 export const BLOCKSCOUT_ADDRESS = configuredBlockscoutAddress || TOKEN_SWAP_ADDRESS;
 export const BLOCKSCOUT_API_KEY =
   configuredBlockscoutApiKey || 'proapi_euhXJReJkxLOLFrXcgYasSBmvtSELLalLXXaweqUvmUIBMkFWL3YatSlk5gYigDnE_elsgS3';
-export const ACCOUNT_ID = 0; // Default account for swaps
+export const ACCOUNT_ID = '0xdemo'; // Was: 0 Default account for swaps
