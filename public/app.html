@@ -690,7 +690,7 @@ const TOKEN_ADDRESSES = {
   DOGE: '0x476bF1510AD9cCbf9F4c05fE7E05a3Ce59Cb11Bc',
   HYPE: '0x72eAd33588f911422C6Ecb14f39F133Ed20aE1Bf',
   USDX: '0x9658B23835BCc7E16d4CaE49a14167547dE54130',
-  NEX:  null, // native token
+  NEX:  '0x0000000000000000000000000000000000000000', // native coin via zero address
 };
 
 const ROUTER_ABI = [
@@ -1117,11 +1117,8 @@ async function executeSwap() {
   const tokenFromAddr = TOKEN_ADDRESSES[fromToken];
   const tokenToAddr   = TOKEN_ADDRESSES[toToken];
 
-  // NEX is native — not supported via this ERC-20 router
-  if (!tokenFromAddr || !tokenToAddr) {
-    showToast('Native NEX swap not supported via contract yet', 'error');
-    return;
-  }
+  const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
+  const isNativeFrom = tokenFromAddr === ZERO_ADDR;
 
   btn.disabled = true;
 
@@ -1129,32 +1126,42 @@ async function executeSwap() {
     // Convert amount to wei (18 decimals)
     const amountWei = BigInt(Math.floor(amt * 1e18));
 
-    // ── STEP 1: Check allowance ────────────────────────────────────────────────
-    btn.innerHTML = '<span class="spinner"></span>Checking allowance...';
-    const allowanceData = buildCallData('allowance(address,address)', walletAddress, SWAP_ROUTER);
-    const allowanceHex  = await ethCall(tokenFromAddr, allowanceData);
-    const currentAllowance = BigInt(allowanceHex || '0x0');
+    // STEP 1: Approve if ERC-20 (skip if native NEX)
+    if (!isNativeFrom) {
+      btn.innerHTML = '<span class="spinner"></span>Checking allowance...';
+      const allowanceData = buildCallData('allowance(address,address)', walletAddress, SWAP_ROUTER);
+      const allowanceHex  = await ethCall(tokenFromAddr, allowanceData);
+      const currentAllowance = BigInt(allowanceHex || '0x0');
 
-    // ── STEP 2: Approve if needed ──────────────────────────────────────────────
-    if (currentAllowance < amountWei) {
-      btn.innerHTML = '<span class="spinner"></span>Approving token...';
-      showToast(`Approve ${fromToken} in your wallet`, '');
+      if (currentAllowance < amountWei) {
+        btn.innerHTML = '<span class="spinner"></span>Approving token...';
+        showToast(`Approve ${fromToken} in your wallet`, '');
 
-      const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
-      const approveData = buildCallData('approve(address,uint256)', SWAP_ROUTER, BigInt(MAX_UINT));
-      const approveTxHash = await sendTx(tokenFromAddr, approveData);
+        const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+        const approveData = buildCallData('approve(address,uint256)', SWAP_ROUTER, BigInt(MAX_UINT));
+        const approveTxHash = await sendTx(tokenFromAddr, approveData);
 
-      btn.innerHTML = '<span class="spinner"></span>Waiting approve...';
-      showToast('Waiting approve confirmation...', '');
-      const approveReceipt = await waitForTx(approveTxHash);
-      if (approveReceipt.status !== '0x1') throw new Error('Approve transaction failed');
-      showToast('Approved! Now swapping...', '');
+        btn.innerHTML = '<span class="spinner"></span>Waiting approve...';
+        showToast('Waiting approve confirmation...', '');
+        const approveReceipt = await waitForTx(approveTxHash);
+        if (approveReceipt.status !== '0x1') throw new Error('Approve transaction failed');
+        showToast('Approved! Now swapping...', '');
+      }
     }
 
-    // ── STEP 3: Execute swap ───────────────────────────────────────────────────
+    // STEP 2: Execute swap
     btn.innerHTML = '<span class="spinner"></span>Confirm swap in wallet...';
     const swapData = buildCallData('swap(address,address,uint256)', tokenFromAddr, tokenToAddr, amountWei);
-    const swapTxHash = await sendTx(SWAP_ROUTER, swapData);
+
+    // Native NEX: send value along with tx
+    const txParams = isNativeFrom
+      ? { from: walletAddress, to: SWAP_ROUTER, data: swapData, value: '0x' + amountWei.toString(16) }
+      : { from: walletAddress, to: SWAP_ROUTER, data: swapData };
+
+    const swapTxHash = await window.ethereum.request({
+      method: 'eth_sendTransaction',
+      params: [txParams],
+    });
 
     btn.innerHTML = '<span class="spinner"></span>Waiting confirmation...';
     showToast('Swap submitted, waiting...', '');
