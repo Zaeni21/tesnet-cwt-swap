@@ -1,4 +1,4 @@
-import axios from 'axios';
+imporimport axios from 'axios';
 import {
   API_BASE_URL,
   BLOCKSCOUT_ADDRESS,
@@ -16,6 +16,51 @@ const SWAP_CONTRACT_ADDRESS =
   process.env.EXPO_PUBLIC_SWAP_CONTRACT_ADDRESS?.trim() || '0x25811e8Ef43261fC87d12EBe3ad75B2cE3274D5B';
 
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+export const SWAP_CONTRACT_ABI = [
+  {
+    inputs: [
+      { internalType: 'address', name: 'spender', type: 'address' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    name: 'approve',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'address', name: 'to', type: 'address' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    name: 'transfer',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+  {
+    inputs: [
+      { internalType: 'address', name: 'from', type: 'address' },
+      { internalType: 'address', name: 'to', type: 'address' },
+      { internalType: 'uint256', name: 'amount', type: 'uint256' },
+    ],
+    name: 'transferFrom',
+    outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+    stateMutability: 'nonpayable',
+    type: 'function',
+  },
+] as const;
+
+// selectors from ABI above:
+const SELECTOR_BALANCE_OF = '70a08231'; // balanceOf(address)
+const SELECTOR_TRANSFER = 'a9059cbb'; // transfer(address,uint256)
 
 type BrowserEthereumProvider = {
   request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -57,15 +102,20 @@ function parseHexToBigInt(value: unknown): bigint {
 }
 
 function formatUnits(raw: bigint, decimals: number): number {
-  const scale = 10 ** decimals;
-  return Number(raw) / scale;
+  const denominator = 10n ** BigInt(decimals);
+  const whole = raw / denominator;
+  const fraction = raw % denominator;
+  const fractionText = fraction.toString().padStart(decimals, '0').replace(/0+$/, '');
+  const output = fractionText ? `${whole.toString()}.${fractionText}` : whole.toString();
+  return Number(output);
 }
 
 function parseUnits(amount: number, decimals: number): bigint {
-  const normalized = amount.toFixed(Math.min(decimals, 12));
+  const normalized = amount.toString();
   const [whole, fraction = ''] = normalized.split('.');
   const fractionPadded = fraction.padEnd(decimals, '0').slice(0, decimals);
-  return BigInt(`${whole}${fractionPadded}`);
+  const wholeSafe = whole === '' ? '0' : whole;
+  return BigInt(`${wholeSafe}${fractionPadded}`);
 }
 
 async function rpcCall(method: string, params: unknown[]): Promise<unknown> {
@@ -88,22 +138,12 @@ async function rpcCall(method: string, params: unknown[]): Promise<unknown> {
 }
 
 async function readTokenBalance(tokenAddress: string, ownerAddress: string): Promise<bigint> {
-  const data = `0x70a08231${padAddress(ownerAddress)}`; // balanceOf(address)
-  const result = await rpcCall('eth_call', [
-    { to: tokenAddress, data },
-    'latest',
-  ]);
+  const data = `0x${SELECTOR_BALANCE_OF}${padAddress(ownerAddress)}`;
+  const result = await rpcCall('eth_call', [{ to: tokenAddress, data }, 'latest']);
   return parseHexToBigInt(result);
 }
 
-/**
- * Estimate quote by reading token balances held by swap contract.
- */
-export async function getQuote(
-  inToken: TokenSymbol,
-  outToken: TokenSymbol,
-  amount: number
-): Promise<number> {
+export async function getQuote(inToken: TokenSymbol, outToken: TokenSymbol, amount: number): Promise<number> {
   if (amount <= 0) return 0;
 
   try {
@@ -118,11 +158,8 @@ export async function getQuote(
     const inReserve = formatUnits(inReserveRaw, TOKENS[inToken].decimals);
     const outReserve = formatUnits(outReserveRaw, TOKENS[outToken].decimals);
 
-    if (inReserve <= 0 || outReserve <= 0) {
-      return 0;
-    }
+    if (inReserve <= 0 || outReserve <= 0) return 0;
 
-    // Constant product AMM estimation without fee.
     return (amount * outReserve) / (inReserve + amount);
   } catch (error) {
     console.error('Failed to fetch quote from contract:', error);
@@ -130,9 +167,6 @@ export async function getQuote(
   }
 }
 
-/**
- * Submit a swap transaction by transferring input token to the swap contract.
- */
 export async function submitSwap(
   inToken: TokenSymbol,
   _outToken: TokenSymbol,
@@ -148,20 +182,12 @@ export async function submitSwap(
     }
 
     const tokenAddress = getTokenContractAddress(inToken);
-    const decimals = TOKENS[inToken].decimals;
-    const parsedAmount = parseUnits(amount, decimals);
-
-    const transferData = `0xa9059cbb${padAddress(SWAP_CONTRACT_ADDRESS)}${toUint256Hex(parsedAmount)}`; // transfer(address,uint256)
+    const parsedAmount = parseUnits(amount, TOKENS[inToken].decimals);
+    const transferData = `0x${SELECTOR_TRANSFER}${padAddress(SWAP_CONTRACT_ADDRESS)}${toUint256Hex(parsedAmount)}`;
 
     const txHash = await provider.request({
       method: 'eth_sendTransaction',
-      params: [
-        {
-          from: accounts[0],
-          to: tokenAddress,
-          data: transferData,
-        },
-      ],
+      params: [{ from: accounts[0], to: tokenAddress, data: transferData }],
     });
 
     if (typeof txHash !== 'string' || !txHash.startsWith('0x')) {
@@ -232,4 +258,4 @@ export async function getBlockscoutAddressTransactions(limit: number = 20): Prom
     console.error('Failed to fetch Blockscout transactions:', error);
     return [];
   }
-}
+                                   }
