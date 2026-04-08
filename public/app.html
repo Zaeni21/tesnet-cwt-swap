@@ -724,6 +724,7 @@ const balances = {
 const FEE = 0.003; // 0.3%
 let slippage = 0.5;
 let walletConnected = false;
+let walletAddress = null;
 let fromToken = 'NEX';
 let toToken = 'ETH';
 let activeModal = null; // 'from' or 'to'
@@ -968,15 +969,33 @@ function closeConfirm() {
   document.getElementById('confirmModal').classList.remove('open');
 }
 
-function executeSwap() {
+async function executeSwap() {
   const btn = document.getElementById('confirmExecBtn');
-  btn.innerHTML = '<span class="spinner"></span>Confirming...';
+  const amt = parseFloat(document.getElementById('fromAmount').value);
+  const out = parseFloat(document.getElementById('toAmount').value);
+  if (!amt || !out) return;
+
+  btn.innerHTML = '<span class="spinner"></span>Waiting signature...';
   btn.disabled = true;
 
-  setTimeout(() => {
-    const amt = parseFloat(document.getElementById('fromAmount').value);
-    const out = parseFloat(document.getElementById('toAmount').value);
+  let signature = null;
+  if (window.ethereum && walletAddress) {
+    try {
+      const signMsg = `Confirm swap on tesnet.cwt.swap\nSend: ${fmt(amt)} ${fromToken}\nReceive: ${fmt(out)} ${toToken}\nSlippage: ${slippage}%\nTime: ${new Date().toISOString()}`;
+      signature = await window.ethereum.request({
+        method: 'personal_sign',
+        params: [signMsg, walletAddress],
+      });
+    } catch (err) {
+      btn.innerHTML = 'Confirm Swap';
+      btn.disabled = false;
+      showToast('Signature rejected in wallet', 'error');
+      return;
+    }
+  }
 
+  btn.innerHTML = '<span class="spinner"></span>Confirming...';
+  setTimeout(() => {
     // Apply AMM state change (simulate)
     const result = getRoute(fromToken, toToken, amt);
     if (result) {
@@ -1006,6 +1025,7 @@ function executeSwap() {
       amtOut: out,
       time: new Date().toISOString(),
       txHash: '0x' + Math.random().toString(16).substr(2, 40),
+      signature: signature ? signature.slice(0, 14) + '...' : 'demo-mode',
     };
     txHistory.unshift(tx);
     localStorage.setItem('nexus_history', JSON.stringify(txHistory.slice(0, 50)));
@@ -1067,6 +1087,7 @@ async function toggleConnect() {
     try {
       const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       const addr = accounts[0];
+      walletAddress = addr;
 
       // Try to switch/add Nexus Testnet (chainId 3945 = 0xF69)
       try {
@@ -1095,6 +1116,7 @@ async function toggleConnect() {
     }
   } else {
     // Simulate connect for demo
+    walletAddress = null;
     connectWallet('0xDemo...SWAP');
     showToast('Demo mode: No wallet detected', '');
   }
