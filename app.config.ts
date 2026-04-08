@@ -28,7 +28,7 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "tesnet.cwt.swap",
+  appName: "NEXUS SWAP",
   appSlug: "tesnet-cwt-swap",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
@@ -39,7 +39,7 @@ const env = {
 };
 
 const config: ExpoConfig = {
-  name: "tesnet.cwt.swap",
+  name: "NEXUS SWAP",
   slug: "tesnet-cwt-swap",
   version: "1.0.0",
   orientation: "portrait",
