@@ -68,7 +68,9 @@ async function startServer() {
     }),
   );
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
+  // Keep the app API off 3000 by default because the local blockchain service
+  // used by the swap flow also runs on 3000.
+  const preferredPort = parseInt(process.env.PORT || "3001");
   const port = await findAvailablePort(preferredPort);
 
   if (port !== preferredPort) {

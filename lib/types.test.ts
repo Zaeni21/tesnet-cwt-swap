@@ -48,7 +48,7 @@ describe('Types and Constants', () => {
 
   describe('Constants', () => {
     it('should have correct API base URL', () => {
-      expect(API_BASE_URL).toBe('http://127.0.0.1:3000');
+      expect(API_BASE_URL).toBe('');
     });
 
     it('should have default account ID', () => {

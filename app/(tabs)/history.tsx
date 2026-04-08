@@ -4,7 +4,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ScreenContainer } from '@/components/screen-container';
 import { TOKENS, SwapTransaction } from '@/lib/types';
 import { useSwapContext } from '@/lib/swap-context';
-import { getRecentBlocks } from '@/lib/api';
+import { getRecentBlocks, getBlockscoutAddressTransactions } from '@/lib/api';
 
 export default function HistoryScreen() {
   const { state, loadTransactions } = useSwapContext();
@@ -21,30 +21,15 @@ export default function HistoryScreen() {
     try {
       // Fetch recent blocks from blockchain
       const blocks = await getRecentBlocks(10);
-
-      // Parse transactions from blocks
-      const newTransactions: SwapTransaction[] = [];
-      blocks.forEach((block) => {
-        block.transactions.forEach((tx) => {
-          if (tx.Swap) {
-            newTransactions.push({
-              id: `${block.id}-${newTransactions.length}`,
-              fromToken: tx.Swap.in_token,
-              toToken: tx.Swap.out_token,
-              amountIn: tx.Swap.amount,
-              amountOut: 0, // Would need to calculate from API
-              timestamp: block.timestamp * 1000,
-              status: 'success',
-              blockId: block.id,
-            });
-          }
-        });
-      });
-
-      // Reload local transactions
-      await loadTransactions();
+      console.log('Fetched blocks from local blockchain:', blocks.length);
     } catch (error) {
-      console.error('Failed to refresh history:', error);
+      console.error('Failed to refresh history from local chain:', error);
+      const explorerTransactions = await getBlockscoutAddressTransactions(10);
+      console.log('Fetched transactions from Blockscout:', explorerTransactions.length);
+    }
+
+    try {
+      await loadTransactions();
     } finally {
       setRefreshing(false);
     }

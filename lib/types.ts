@@ -120,5 +120,28 @@ export const TOKEN_CONTRACTS = {
 } as const;
 
 
-export const API_BASE_URL = 'http://127.0.0.1:3000';
+const configuredApiBaseUrl = process.env.EXPO_PUBLIC_BLOCKCHAIN_API_URL?.trim();
+const configuredBlockscoutBaseUrl = process.env.EXPO_PUBLIC_BLOCKSCOUT_BASE_URL?.trim();
+const configuredBlockscoutChainId = process.env.EXPO_PUBLIC_BLOCKSCOUT_CHAIN_ID?.trim();
+const configuredBlockscoutAddress = process.env.EXPO_PUBLIC_BLOCKSCOUT_ADDRESS?.trim();
+const configuredBlockscoutApiKey = process.env.EXPO_PUBLIC_BLOCKSCOUT_API_KEY?.trim();
+
+function isLocalhostUrl(url: string): boolean {
+  return (
+    url.includes('://localhost') ||
+    url.includes('://127.0.0.1') ||
+    url.includes('://0.0.0.0') ||
+    url.includes('://[::1]')
+  );
+}
+
+export const API_BASE_URL = configuredApiBaseUrl && configuredApiBaseUrl.length > 0 ? configuredApiBaseUrl : '';
+export const IS_API_BASE_URL_LOCAL = API_BASE_URL.length > 0 && isLocalhostUrl(API_BASE_URL);
+export const BLOCKSCOUT_BASE_URL =
+  configuredBlockscoutBaseUrl && configuredBlockscoutBaseUrl.length > 0
+    ? configuredBlockscoutBaseUrl
+    : 'https://api.blockscout.com';
+export const BLOCKSCOUT_CHAIN_ID = configuredBlockscoutChainId || '3945';
+export const BLOCKSCOUT_ADDRESS = configuredBlockscoutAddress || TOKEN_SWAP_ADDRESS;
+export const BLOCKSCOUT_API_KEY = configuredBlockscoutApiKey || '';
 export const ACCOUNT_ID = 0; // Default account for swaps

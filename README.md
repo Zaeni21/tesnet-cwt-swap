@@ -1,6 +1,6 @@
 # tesnet.cwt.swap
 
-A modern, high-performance mobile application for token swapping on a local blockchain simulation. Built with **Expo**, **React Native**, and **TypeScript**, tesnet.cwt.swap provides a seamless user experience for exchanging tokens using an Automated Market Maker (AMM).
+A modern, high-performance mobile application for token swapping via a blockchain API. Built with **Expo**, **React Native**, and **TypeScript**, tesnet.cwt.swap provides a seamless user experience for exchanging tokens using an Automated Market Maker (AMM).
 
 ## Features
 
@@ -51,7 +51,7 @@ A modern, high-performance mobile application for token swapping on a local bloc
 
 - **Node.js** 18+ and **pnpm** 9+
 - **Expo CLI** (installed via pnpm)
-- **Rust** (for running the blockchain service locally)
+- Access to a **public blockchain API URL** for swap endpoints
 
 ### Installation
 
@@ -72,29 +72,30 @@ A modern, high-performance mobile application for token swapping on a local bloc
    ```
 
    This will start both the Metro bundler and the development server on port 8081.
+   The internal app API server defaults to port `3001`.
 
-### Running the Blockchain Service
+### Configure Blockchain API (Required)
 
-The app requires a local blockchain service running on `http://127.0.0.1:3000`. To set it up:
+Set `EXPO_PUBLIC_BLOCKCHAIN_API_URL` to a **publicly reachable** chain API.
+Do **not** use `localhost`, `127.0.0.1`, or other local IPs.
 
-1. **Install Rust** (if not already installed):
-   ```bash
-   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-   ```
+Example:
+```bash
+EXPO_PUBLIC_BLOCKCHAIN_API_URL=https://your-public-chain-api.example.com pnpm dev
+```
 
-2. **Clone the Nexus coding exercise repository:**
-   ```bash
-   git clone https://github.com/nexus-xyz/nexus-coding-exercise.git
-   cd nexus-coding-exercise/services
-   ```
+Optional (for explorer fallback on History refresh):
+```bash
+EXPO_PUBLIC_BLOCKSCOUT_BASE_URL=https://api.blockscout.com
+EXPO_PUBLIC_BLOCKSCOUT_CHAIN_ID=3945
+EXPO_PUBLIC_BLOCKSCOUT_ADDRESS=<contract-or-wallet-address>
+EXPO_PUBLIC_BLOCKSCOUT_API_KEY=<your-blockscout-api-key>
+```
 
-3. **Build and run the blockchain:**
-   ```bash
-   cargo build
-   cargo run -- --start-chain --num-accounts 20
-   ```
+This maps to:
+`https://api.blockscout.com/{{chainID}}/api/v2/addresses/{{address}}/transactions?apikey={{api-key}}`
 
-   The blockchain service will start on `http://127.0.0.1:3000`.
+If `EXPO_PUBLIC_BLOCKSCOUT_CHAIN_ID` is not set, the app defaults to `3945`.
 
 ### Testing on Device
 
@@ -158,13 +159,13 @@ The app communicates with the blockchain service via REST API:
 
 **Get Exchange Rate:**
 ```bash
-curl "http://127.0.0.1:3000/rate?in=NEX&out=ETH&amount=10"
+curl "https://your-public-chain-api.example.com/rate?in=NEX&out=ETH&amount=10"
 # Response: { "amount_out": 9.0909090909 }
 ```
 
 **Submit Swap:**
 ```bash
-curl -X POST http://127.0.0.1:3000/transaction \
+curl -X POST https://your-public-chain-api.example.com/transaction \
   -H "Content-Type: application/json" \
   -d '{
     "Swap": {
@@ -178,7 +179,7 @@ curl -X POST http://127.0.0.1:3000/transaction \
 
 **Fetch Blocks:**
 ```bash
-curl "http://127.0.0.1:3000/blocks?n=10"
+curl "https://your-public-chain-api.example.com/blocks?n=10"
 ```
 
 ## Development
@@ -312,11 +313,11 @@ vercel deploy
 
 ## Environment Variables
 
-The app uses the following environment variables (optional):
+The app uses the following environment variables:
 
 ```env
 # API Configuration
-EXPO_PUBLIC_API_URL=http://127.0.0.1:3000
+EXPO_PUBLIC_BLOCKCHAIN_API_URL=https://your-public-chain-api.example.com
 
 # Feature Flags
 EXPO_PUBLIC_ENABLE_ANALYTICS=true
@@ -351,9 +352,9 @@ The app follows WCAG AA standards:
 
 ## Known Limitations
 
-- Requires local blockchain service running on `http://127.0.0.1:3000`
+- Requires a publicly reachable blockchain API URL via `EXPO_PUBLIC_BLOCKCHAIN_API_URL`
 - Currently supports only 7 tokens (USDC, USDT, ETH, BTC, NEX, DOGE, HYPE)
-- No real-world blockchain integration (local simulation only)
+- Depends on external/public blockchain API availability
 - No user authentication system (demo account only)
 
 ## Future Enhancements
