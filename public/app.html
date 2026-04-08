@@ -679,6 +679,138 @@
 <div id="toast"></div>
 
 <script>
+// ── CONTRACT CONFIG ────────────────────────────────────────────────────────────
+const SWAP_ROUTER = '0x25811e8Ef43261fC87d12EBe3ad75B2cE3274D5B';
+
+const TOKEN_ADDRESSES = {
+  ETH:  '0x6afaAad5aE59698fC3b20B67c0fD6549efcaE39A',
+  BTC:  '0x3eC542a8Dc12Fed02a645d9DD14950594Bf31a8b',
+  USDC: '0x9586d069a180823D7386cEf01Ec232c7E74F9538',
+  USDT: '0xf88baD145FE915F3cFB6f62b3fd3fe7Ce9eEd91d',
+  DOGE: '0x476bF1510AD9cCbf9F4c05fE7E05a3Ce59Cb11Bc',
+  HYPE: '0x72eAd33588f911422C6Ecb14f39F133Ed20aE1Bf',
+  USDX: '0x9658B23835BCc7E16d4CaE49a14167547dE54130',
+  NEX:  null, // native token
+};
+
+const ROUTER_ABI = [
+  {
+    "inputs": [{"internalType":"address","name":"_tokenFrom","type":"address"},{"internalType":"address","name":"_tokenTo","type":"address"},{"internalType":"uint256","name":"_amountFrom","type":"uint256"}],
+    "name": "swap",
+    "outputs": [{"internalType":"bool","name":"","type":"bool"}],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType":"address","name":"_tokenFrom","type":"address"},{"internalType":"address","name":"_tokenTo","type":"address"},{"internalType":"uint256","name":"_amountFrom","type":"uint256"}],
+    "name": "calculateSwapAmount",
+    "outputs": [{"internalType":"uint256","name":"","type":"uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+
+const ERC20_ABI = [
+  {
+    "inputs": [{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],
+    "name": "approve",
+    "outputs": [{"internalType":"bool","name":"","type":"bool"}],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType":"address","name":"account","type":"address"}],
+    "name": "balanceOf",
+    "outputs": [{"internalType":"uint256","name":"","type":"uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],
+    "name": "allowance",
+    "outputs": [{"internalType":"uint256","name":"","type":"uint256"}],
+    "stateMutability": "view",
+    "type": "function"
+  }
+];
+
+// ABI encode helper (manual, no ethers dependency)
+function encodeABI(funcSig, types, values) {
+  const selector = keccak256Selector(funcSig);
+  let encoded = selector;
+  for (let i = 0; i < types.length; i++) {
+    if (types[i] === 'address') {
+      encoded += values[i].toLowerCase().replace('0x','').padStart(64, '0');
+    } else if (types[i] === 'uint256') {
+      encoded += BigInt(values[i]).toString(16).padStart(64, '0');
+    }
+  }
+  return encoded;
+}
+
+function keccak256Selector(sig) {
+  // Use ethereum's method: first 4 bytes of keccak256
+  // We'll use a precomputed approach via subtle crypto
+  // Fallback: use eth_call with method id
+  const sigs = {
+    'approve(address,uint256)':                          '0x095ea7b3',
+    'allowance(address,address)':                        '0xdd62ed3e',
+    'balanceOf(address)':                                '0x70a08231',
+    'swap(address,address,uint256)':                     '0xd004f0f7',
+    'calculateSwapAmount(address,address,uint256)':      '0x9b4e5b80',
+  };
+  return sigs[sig] || null;
+}
+
+function encodeAddress(addr) {
+  return addr.toLowerCase().replace('0x','').padStart(64,'0');
+}
+function encodeUint256(val) {
+  return BigInt(val).toString(16).padStart(64,'0');
+}
+
+function buildCallData(funcSig, ...args) {
+  const sel = keccak256Selector(funcSig);
+  if (!sel) throw new Error('Unknown function sig: ' + funcSig);
+  let data = sel;
+  for (const arg of args) {
+    if (typeof arg === 'string' && arg.startsWith('0x')) {
+      data += encodeAddress(arg);
+    } else {
+      data += encodeUint256(arg);
+    }
+  }
+  return data;
+}
+
+async function ethCall(to, data) {
+  const result = await window.ethereum.request({
+    method: 'eth_call',
+    params: [{ to, data }, 'latest'],
+  });
+  return result;
+}
+
+async function sendTx(to, data) {
+  const txHash = await window.ethereum.request({
+    method: 'eth_sendTransaction',
+    params: [{ from: walletAddress, to, data }],
+  });
+  return txHash;
+}
+
+async function waitForTx(txHash) {
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 2000));
+    const receipt = await window.ethereum.request({
+      method: 'eth_getTransactionReceipt',
+      params: [txHash],
+    });
+    if (receipt) return receipt;
+  }
+  throw new Error('Transaction timeout');
+}
+
 // ── AMM STATE ──────────────────────────────────────────────────────────────────
 const TOKENS = {
   NEX:  { name: 'NEX',  full: 'Nexus',         color: '#4f6ef7', bg: '#1a2050', emoji: 'N', usdPrice: 1.10 },
@@ -976,48 +1108,74 @@ async function executeSwap() {
   const out = parseFloat(document.getElementById('toAmount').value);
   if (!amt || !out) return;
 
-  btn.innerHTML = '<span class="spinner"></span>Waiting signature...';
-  btn.disabled = true;
-
-  let signature = null;
-  if (window.ethereum && walletAddress) {
-    try {
-      const signMsg = `Confirm swap on tesnet.cwt.swap\nSend: ${fmt(amt)} ${fromToken}\nReceive: ${fmt(out)} ${toToken}\nSlippage: ${slippage}%\nTime: ${new Date().toISOString()}`;
-      signature = await window.ethereum.request({
-        method: 'personal_sign',
-        params: [signMsg, walletAddress],
-      });
-    } catch (err) {
-      btn.innerHTML = 'Confirm Swap';
-      btn.disabled = false;
-      showToast('Signature rejected in wallet', 'error');
-      return;
-    }
+  // If no real wallet, fallback to demo mode
+  if (!window.ethereum || !walletAddress) {
+    executeDemoSwap(amt, out);
+    return;
   }
 
-  btn.innerHTML = '<span class="spinner"></span>Confirming...';
-  setTimeout(() => {
-    // Apply AMM state change (simulate)
+  const tokenFromAddr = TOKEN_ADDRESSES[fromToken];
+  const tokenToAddr   = TOKEN_ADDRESSES[toToken];
+
+  // NEX is native — not supported via this ERC-20 router
+  if (!tokenFromAddr || !tokenToAddr) {
+    showToast('Native NEX swap not supported via contract yet', 'error');
+    return;
+  }
+
+  btn.disabled = true;
+
+  try {
+    // Convert amount to wei (18 decimals)
+    const amountWei = BigInt(Math.floor(amt * 1e18));
+
+    // ── STEP 1: Check allowance ────────────────────────────────────────────────
+    btn.innerHTML = '<span class="spinner"></span>Checking allowance...';
+    const allowanceData = buildCallData('allowance(address,address)', walletAddress, SWAP_ROUTER);
+    const allowanceHex  = await ethCall(tokenFromAddr, allowanceData);
+    const currentAllowance = BigInt(allowanceHex || '0x0');
+
+    // ── STEP 2: Approve if needed ──────────────────────────────────────────────
+    if (currentAllowance < amountWei) {
+      btn.innerHTML = '<span class="spinner"></span>Approving token...';
+      showToast(`Approve ${fromToken} in your wallet`, '');
+
+      const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
+      const approveData = buildCallData('approve(address,uint256)', SWAP_ROUTER, BigInt(MAX_UINT));
+      const approveTxHash = await sendTx(tokenFromAddr, approveData);
+
+      btn.innerHTML = '<span class="spinner"></span>Waiting approve...';
+      showToast('Waiting approve confirmation...', '');
+      const approveReceipt = await waitForTx(approveTxHash);
+      if (approveReceipt.status !== '0x1') throw new Error('Approve transaction failed');
+      showToast('Approved! Now swapping...', '');
+    }
+
+    // ── STEP 3: Execute swap ───────────────────────────────────────────────────
+    btn.innerHTML = '<span class="spinner"></span>Confirm swap in wallet...';
+    const swapData = buildCallData('swap(address,address,uint256)', tokenFromAddr, tokenToAddr, amountWei);
+    const swapTxHash = await sendTx(SWAP_ROUTER, swapData);
+
+    btn.innerHTML = '<span class="spinner"></span>Waiting confirmation...';
+    showToast('Swap submitted, waiting...', '');
+    const receipt = await waitForTx(swapTxHash);
+
+    if (receipt.status !== '0x1') throw new Error('Swap transaction reverted');
+
+    // ── STEP 4: Save to history & update UI ───────────────────────────────────
+    // Also update local AMM state for UI consistency
     const result = getRoute(fromToken, toToken, amt);
     if (result) {
       const direct = getPool(fromToken, toToken);
       if (direct) {
         const { pool, reversed } = direct;
-        if (!reversed) {
-          pool.rA += amt * (1 - FEE);
-          pool.rB -= out;
-        } else {
-          pool.rB += amt * (1 - FEE);
-          pool.rA -= out;
-        }
+        if (!reversed) { pool.rA += amt * (1 - FEE); pool.rB -= out; }
+        else            { pool.rB += amt * (1 - FEE); pool.rA -= out; }
       }
     }
-
-    // Update balances
     balances[fromToken] -= amt;
-    balances[toToken] += out;
+    balances[toToken]   += out;
 
-    // Save history
     const tx = {
       id: Date.now(),
       from: fromToken,
@@ -1025,20 +1183,62 @@ async function executeSwap() {
       amtIn: amt,
       amtOut: out,
       time: new Date().toISOString(),
-      txHash: '0x' + Math.random().toString(16).substr(2, 40),
-      signature: signature ? signature.slice(0, 14) + '...' : 'demo-mode',
+      txHash: swapTxHash,
     };
     txHistory.unshift(tx);
     localStorage.setItem('nexus_history', JSON.stringify(txHistory.slice(0, 50)));
 
-    // Reset UI
     document.getElementById('fromAmount').value = '';
-    document.getElementById('toAmount').value = '';
+    document.getElementById('toAmount').value   = '';
     closeConfirm();
     btn.innerHTML = 'Confirm Swap';
-    btn.disabled = false;
+    btn.disabled  = false;
     updateRate();
-    showToast(`Swapped ${fmt(amt)} ${fromToken} → ${fmt(out)} ${toToken}`, 'success');
+    showToast(`✓ Swapped ${fmt(amt)} ${fromToken} → ${fmt(out)} ${toToken}`, 'success');
+
+  } catch (err) {
+    btn.innerHTML = 'Confirm Swap';
+    btn.disabled  = false;
+    const msg = err?.message || 'Transaction failed';
+    if (msg.includes('rejected') || msg.includes('denied') || msg.includes('4001')) {
+      showToast('Transaction rejected by user', 'error');
+    } else {
+      showToast(msg.length > 60 ? msg.slice(0, 60) + '...' : msg, 'error');
+    }
+  }
+}
+
+// Demo swap (no wallet / NEX native token)
+function executeDemoSwap(amt, out) {
+  const btn = document.getElementById('confirmExecBtn');
+  btn.innerHTML = '<span class="spinner"></span>Confirming...';
+  btn.disabled = true;
+  setTimeout(() => {
+    const result = getRoute(fromToken, toToken, amt);
+    if (result) {
+      const direct = getPool(fromToken, toToken);
+      if (direct) {
+        const { pool, reversed } = direct;
+        if (!reversed) { pool.rA += amt * (1 - FEE); pool.rB -= out; }
+        else            { pool.rB += amt * (1 - FEE); pool.rA -= out; }
+      }
+    }
+    balances[fromToken] -= amt;
+    balances[toToken]   += out;
+    const tx = {
+      id: Date.now(), from: fromToken, to: toToken,
+      amtIn: amt, amtOut: out, time: new Date().toISOString(),
+      txHash: '0x' + Math.random().toString(16).substr(2, 40),
+    };
+    txHistory.unshift(tx);
+    localStorage.setItem('nexus_history', JSON.stringify(txHistory.slice(0, 50)));
+    document.getElementById('fromAmount').value = '';
+    document.getElementById('toAmount').value   = '';
+    closeConfirm();
+    btn.innerHTML = 'Confirm Swap';
+    btn.disabled  = false;
+    updateRate();
+    showToast(`[Demo] Swapped ${fmt(amt)} ${fromToken} → ${fmt(out)} ${toToken}`, 'success');
   }, 1200);
 }
 
