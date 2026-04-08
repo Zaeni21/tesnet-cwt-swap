@@ -42,8 +42,8 @@
     position: fixed;
     inset: 0;
     background-image:
-      linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, 0.03) 25%, rgba(0, 255, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.03) 75%, rgba(0, 255, 0, 0.03) 76%, transparent 77%, transparent),
-      linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, 0.03) 25%, rgba(0, 255, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.03) 75%, rgba(0, 255, 0, 0.03) 76%, transparent 77%, transparent);
+      linear-gradient(0deg, transparent 24%, rgba(0, 255, 0, 0.03) 25%, rgba(0, 255, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.03) 75%, rgba(0, 255, 0, 0.03) 76%, transparent 77%, transparent 100%),
+      linear-gradient(90deg, transparent 24%, rgba(0, 255, 0, 0.03) 25%, rgba(0, 255, 0, 0.03) 26%, transparent 27%, transparent 74%, rgba(0, 255, 0, 0.03) 75%, rgba(0, 255, 0, 0.03) 76%, transparent 77%, transparent 100%);
     background-size: 50px 50px;
     pointer-events: none;
     z-index: 0;
@@ -450,6 +450,102 @@
   }
   .btn-confirm:hover { background: var(--accent); color: var(--bg); }
 
+  /* WALLET CONNECT MODAL */
+  #walletModal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  #walletModal.open { display: flex; }
+  .wallet-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 32px 24px;
+    width: 100%;
+    max-width: 420px;
+    animation: fadeIn 0.3s ease;
+  }
+  .wallet-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .wallet-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .wallet-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .wallet-option {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .wallet-option:hover:not(.disabled) {
+    background: rgba(79,110,247,0.1);
+    border-color: var(--accent);
+  }
+  .wallet-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .wallet-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .wallet-info {
+    flex: 1;
+  }
+  .wallet-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text);
+  }
+  .wallet-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .wallet-badge {
+    font-size: 10px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: rgba(255, 92, 92, 0.15);
+    color: var(--red);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .wallet-badge.active {
+    background: rgba(0, 255, 0, 0.15);
+    color: var(--green);
+  }
+
   /* HISTORY */
   #historyPanel { display: none; }
   #historyPanel.active { display: block; }
@@ -648,6 +744,35 @@
   </div>
 </main>
 
+<!-- WALLET CONNECT MODAL -->
+<div id="walletModal">
+  <div class="wallet-card">
+    <div class="wallet-title">Connect Wallet</div>
+    <div class="wallet-subtitle">Choose your connection method</div>
+    <div class="wallet-options">
+      <!-- Demo Mode -->
+      <div class="wallet-option" id="walletDemo" onclick="connectWallet('demo')">
+        <div class="wallet-icon" style="background: rgba(0,255,0,0.15); color: var(--green)">🎮</div>
+        <div class="wallet-info">
+          <div class="wallet-name">Demo Mode</div>
+          <div class="wallet-desc">Test with mock balances</div>
+        </div>
+        <div class="wallet-badge active">ACTIVE</div>
+      </div>
+      
+      <!-- MetaMask -->
+      <div class="wallet-option disabled" id="walletMetamask">
+        <div class="wallet-icon" style="background: rgba(255,151,64,0.15); color: #f7931a">🦊</div>
+        <div class="wallet-info">
+          <div class="wallet-name">MetaMask</div>
+          <div class="wallet-desc">Connect with your wallet</div>
+        </div>
+        <div class="wallet-badge">DISABLED</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TOKEN MODAL -->
 <div id="tokenModal">
   <div class="modal-sheet">
@@ -679,7 +804,7 @@
 <div id="toast"></div>
 
 <script>
-// ── CONTRACT CONFIG ────────────────────────────────────────────────────────────
+// ── CONTRACT CONFIG ────────────────────────────────────────────────────────
 const SWAP_ROUTER = '0xAc354bF77c25e036f7F9A16285f5cD868dBe7bDd';
 
 const TOKEN_ADDRESSES = {
@@ -812,7 +937,7 @@ async function waitForTx(txHash) {
   throw new Error('Transaction timeout');
 }
 
-// ── AMM STATE ──────────────────────────────────────────────────────────────────
+// ── AMM STATE ──────────────────────────────────────────────────────────
 const TOKENS = {
   NEX:  { name: 'NEX',  full: 'Nexus',         color: '#4f6ef7', bg: '#1a2050', emoji: 'N', usdPrice: 1.10 },
   ETH:  { name: 'ETH',  full: 'Ethereum',       color: '#627eea', bg: '#1a1f4a', emoji: 'Ξ', usdPrice: 3200 },
@@ -859,6 +984,7 @@ const EXPLORER_BASE_URL = 'https://testnet.explorer.nexus.xyz';
 let slippage = 0.5;
 let walletConnected = false;
 let walletAddress = null;
+let walletMode = null; // 'demo' or 'metamask'
 let fromToken = 'NEX';
 let toToken = 'ETH';
 let activeModal = null; // 'from' or 'to'
@@ -909,7 +1035,7 @@ function getRoute(from, to, amount) {
   return null;
 }
 
-// ── UI HELPERS ─────────────────────────────────────────────────────────────────
+// ── UI HELPERS ──────────────────────────────────────────────────────────
 function renderTokenBtn(which) {
   const t = which === 'from' ? fromToken : toToken;
   const info = TOKENS[t];
@@ -1002,100 +1128,184 @@ function updateSwapBtn() {
     btn.disabled = true;
     return;
   }
-  if (fromToken === toToken) {
-    btn.textContent = 'Select Different Tokens';
-    btn.disabled = true;
-    return;
-  }
-  if (amount > balances[fromToken]) {
+  const bal = balances[fromToken] || 0;
+  if (amount > bal) {
     btn.textContent = 'Insufficient Balance';
     btn.disabled = true;
     return;
   }
-  const toAmt = document.getElementById('toAmount').value;
-  if (!toAmt || parseFloat(toAmt) <= 0) {
-    btn.textContent = 'No Route Found';
-    btn.disabled = true;
-    return;
-  }
-  btn.innerHTML = `Swap ${fromToken} → ${toToken}`;
+  btn.textContent = 'Swap ' + fromToken;
   btn.disabled = false;
 }
 
-function onAmountInput() { updateRate(); }
-
-function setMax() {
-  document.getElementById('fromAmount').value = fmt(balances[fromToken]);
-  updateRate();
+function toggleConnect() {
+  if (walletConnected) {
+    disconnectWallet();
+  } else {
+    openWalletModal();
+  }
 }
 
-function flipTokens() {
-  [fromToken, toToken] = [toToken, fromToken];
-  renderTokenBtn('from');
-  renderTokenBtn('to');
+function openWalletModal() {
+  document.getElementById('walletModal').classList.add('open');
+}
+
+function closeWalletModal() {
+  document.getElementById('walletModal').classList.remove('open');
+}
+
+function connectWallet(mode) {
+  if (mode === 'metamask' && walletMode !== 'demo') {
+    toast('MetaMask is currently disabled', 'error');
+    return;
+  }
+  
+  walletMode = mode;
+  walletConnected = true;
+  
+  if (mode === 'demo') {
+    walletAddress = '0x' + Math.random().toString(16).substring(2, 42).toUpperCase();
+    document.getElementById('statusDot').classList.add('connected');
+    document.getElementById('statusText').textContent = `Connected: Demo Mode`;
+    document.getElementById('connectBtn').textContent = 'Demo Mode';
+    document.getElementById('connectBtn').classList.add('connected');
+    
+    // Render tokens
+    renderTokenBtn('from');
+    renderTokenBtn('to');
+    renderTokenList('from');
+    
+    updateRate();
+    closeWalletModal();
+    toast('Connected to Demo Mode', 'success');
+  }
+}
+
+function disconnectWallet() {
+  walletConnected = false;
+  walletAddress = null;
+  walletMode = null;
+  
+  document.getElementById('statusDot').classList.remove('connected');
+  document.getElementById('statusText').textContent = 'Connect your wallet to start swapping';
+  document.getElementById('connectBtn').textContent = 'Connect Wallet';
+  document.getElementById('connectBtn').classList.remove('connected');
+  
   document.getElementById('fromAmount').value = '';
+  document.getElementById('toAmount').value = '';
   updateRate();
+  
+  toast('Wallet disconnected', 'success');
 }
 
-function setSlippage(v) {
-  slippage = v;
-  ['05','1','3'].forEach(s => document.getElementById('slip' + s).classList.remove('active'));
-  const map = {0.5:'05', 1:'1', 3:'3'};
-  if (map[v]) document.getElementById('slip' + map[v]).classList.add('active');
-  updateRate();
-}
-
-// ── MODAL ──────────────────────────────────────────────────────────────────────
+// Modal functions
 function openModal(which) {
+  if (!walletConnected) return;
   activeModal = which;
+  renderTokenList(which);
+  document.getElementById('tokenModal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('tokenModal').classList.remove('open');
+  activeModal = null;
+}
+
+function renderTokenList(which) {
   const list = document.getElementById('tokenList');
   list.innerHTML = '';
-  Object.keys(TOKENS).forEach(sym => {
-    const t = TOKENS[sym];
-    const selected = (which === 'from' ? fromToken : toToken) === sym;
-    const div = document.createElement('div');
-    div.className = 'token-item' + (selected ? ' selected' : '');
-    div.innerHTML = `
-      <div class="token-icon" style="background:${t.bg};color:${t.color};width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;">${t.emoji}</div>
+  
+  for (const symbol in TOKENS) {
+    const t = TOKENS[symbol];
+    const bal = balances[symbol] || 0;
+    const isSelected = (which === 'from' && fromToken === symbol) || (which === 'to' && toToken === symbol);
+    
+    const item = document.createElement('div');
+    item.className = 'token-item' + (isSelected ? ' selected' : '');
+    item.innerHTML = `
+      <div class="token-icon" style="background: ${t.bg}; color: ${t.color}">${t.emoji}</div>
       <div class="token-item-info">
         <div class="token-item-name">${t.name}</div>
         <div class="token-item-full">${t.full}</div>
       </div>
-      <div class="token-item-bal">${fmt(balances[sym])}</div>
+      <div class="token-item-bal">${fmt(bal, 4)}</div>
     `;
-    div.onclick = () => selectToken(sym);
-    list.appendChild(div);
-  });
-  document.getElementById('tokenModal').classList.add('open');
+    item.onclick = () => selectToken(symbol, which);
+    list.appendChild(item);
+  }
 }
 
-function closeModal() { document.getElementById('tokenModal').classList.remove('open'); }
-
-function selectToken(sym) {
-  if (activeModal === 'from') {
-    if (sym === toToken) { [fromToken, toToken] = [toToken, fromToken]; }
-    else fromToken = sym;
-  } else {
-    if (sym === fromToken) { [fromToken, toToken] = [toToken, fromToken]; }
-    else toToken = sym;
-  }
+function selectToken(symbol, which) {
+  if (which === 'from') fromToken = symbol;
+  else toToken = symbol;
+  
+  closeModal();
   renderTokenBtn('from');
   renderTokenBtn('to');
-  closeModal();
-  document.getElementById('fromAmount').value = '';
+  updateRate();
+}
+
+function showTab(tab) {
+  if (tab === 'swap') {
+    document.getElementById('tabSwap').classList.add('active');
+    document.getElementById('tabHistory').classList.remove('active');
+    document.getElementById('swapPanel').style.display = 'block';
+    document.getElementById('historyPanel').classList.remove('active');
+  } else {
+    document.getElementById('tabSwap').classList.remove('active');
+    document.getElementById('tabHistory').classList.add('active');
+    document.getElementById('swapPanel').style.display = 'none';
+    document.getElementById('historyPanel').classList.add('active');
+    renderHistory();
+  }
+}
+
+function setMax() {
+  if (!walletConnected) return;
+  const max = balances[fromToken] || 0;
+  document.getElementById('fromAmount').value = max;
+  updateRate();
+}
+
+function flipTokens() {
+  const tmp = fromToken;
+  fromToken = toToken;
+  toToken = tmp;
+  renderTokenBtn('from');
+  renderTokenBtn('to');
+  updateRate();
+}
+
+function onAmountInput() {
+  updateRate();
+}
+
+function setSlippage(val) {
+  slippage = val;
+  document.querySelectorAll('.slip-btn').forEach(b => b.classList.remove('active'));
+  if (val === 0.5) document.getElementById('slip05').classList.add('active');
+  else if (val === 1) document.getElementById('slip1').classList.add('active');
+  else if (val === 3) document.getElementById('slip3').classList.add('active');
   updateRate();
 }
 
 function openConfirm() {
-  const amt = parseFloat(document.getElementById('fromAmount').value);
-  const out = parseFloat(document.getElementById('toAmount').value);
-  if (!amt || !out) return;
-  const result = getRoute(fromToken, toToken, amt);
-  document.getElementById('cfSend').textContent = `${fmt(amt)} ${fromToken}`;
-  document.getElementById('cfReceive').textContent = `${fmt(out)} ${toToken}`;
-  document.getElementById('cfRate').textContent = `1 ${fromToken} = ${fmt(out/amt)} ${toToken}`;
-  document.getElementById('cfImpact').textContent = result ? fmt(result.impact, 3) + '%' : '—';
+  if (!walletConnected) return;
+  const amount = parseFloat(document.getElementById('fromAmount').value);
+  if (!amount || amount <= 0) return;
+  
+  const result = getRoute(fromToken, toToken, amount);
+  if (!result) return;
+  
+  const { out, impact } = result;
+  const minOut = out * (1 - slippage / 100);
+  
+  document.getElementById('cfSend').textContent = fmt(amount) + ' ' + fromToken;
+  document.getElementById('cfReceive').textContent = fmt(out) + ' ' + toToken;
+  document.getElementById('cfRate').textContent = `1 ${fromToken} = ${fmt(out / amount)} ${toToken}`;
+  document.getElementById('cfImpact').textContent = fmt(impact, 3) + '%';
   document.getElementById('cfSlippage').textContent = slippage + '%';
+  
   document.getElementById('confirmModal').classList.add('open');
 }
 
@@ -1103,276 +1313,88 @@ function closeConfirm() {
   document.getElementById('confirmModal').classList.remove('open');
 }
 
-async function executeSwap() {
-  const btn = document.getElementById('confirmExecBtn');
-  const amt = parseFloat(document.getElementById('fromAmount').value);
-  const out = parseFloat(document.getElementById('toAmount').value);
-  if (!amt || !out) return;
-
-  // If no real wallet, fallback to demo mode
-  if (!window.ethereum || !walletAddress) {
-    executeDemoSwap(amt, out);
-    return;
-  }
-
-  const tokenFromAddr = TOKEN_ADDRESSES[fromToken];
-  const tokenToAddr   = TOKEN_ADDRESSES[toToken];
-
-  const ZERO_ADDR = '0x0000000000000000000000000000000000000000';
-  const isNativeFrom = tokenFromAddr === ZERO_ADDR;
-
-  btn.disabled = true;
-
-  try {
-    // Convert amount to wei (18 decimals)
-    const amountWei = BigInt(Math.floor(amt * 1e18));
-
-    // STEP 1: Approve if ERC-20 (skip if native NEX)
-    if (!isNativeFrom) {
-      btn.innerHTML = '<span class="spinner"></span>Checking allowance...';
-      const allowanceData = buildCallData('allowance(address,address)', walletAddress, SWAP_ROUTER);
-      const allowanceHex  = await ethCall(tokenFromAddr, allowanceData);
-      const currentAllowance = BigInt(allowanceHex || '0x0');
-
-      if (currentAllowance < amountWei) {
-        btn.innerHTML = '<span class="spinner"></span>Approving token...';
-        showToast(`Approve ${fromToken} in your wallet`, '');
-
-        const MAX_UINT = '0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff';
-        const approveData = buildCallData('approve(address,uint256)', SWAP_ROUTER, BigInt(MAX_UINT));
-        const approveTxHash = await sendTx(tokenFromAddr, approveData);
-
-        btn.innerHTML = '<span class="spinner"></span>Waiting approve...';
-        showToast('Waiting approve confirmation...', '');
-        const approveReceipt = await waitForTx(approveTxHash);
-        if (approveReceipt.status !== '0x1') throw new Error('Approve transaction failed');
-        showToast('Approved! Now swapping...', '');
-      }
-    }
-
-    // STEP 2: Execute swap
-    btn.innerHTML = '<span class="spinner"></span>Confirm swap in wallet...';
-
-    let swapTxHash;
-    if (isNativeFrom) {
-      // Native NEX → ERC20: call swapNative(tokenTo) with msg.value
-      const swapData = buildCallData('swapNative(address)', tokenToAddr);
-      swapTxHash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [{ from: walletAddress, to: SWAP_ROUTER, data: swapData, value: '0x' + amountWei.toString(16) }],
-      });
-    } else {
-      // ERC20 → ERC20/native: call swap(tokenFrom, tokenTo, amount)
-      const swapData = buildCallData('swap(address,address,uint256)', tokenFromAddr, tokenToAddr, amountWei);
-      swapTxHash = await window.ethereum.request({
-        method: 'eth_sendTransaction',
-        params: [{ from: walletAddress, to: SWAP_ROUTER, data: swapData }],
-      });
-    }
-
-    btn.innerHTML = '<span class="spinner"></span>Waiting confirmation...';
-    showToast('Swap submitted, waiting...', '');
-    const receipt = await waitForTx(swapTxHash);
-
-    if (receipt.status !== '0x1') throw new Error('Swap transaction reverted');
-
-    // ── STEP 4: Save to history & update UI ───────────────────────────────────
-    // Also update local AMM state for UI consistency
-    const result = getRoute(fromToken, toToken, amt);
-    if (result) {
-      const direct = getPool(fromToken, toToken);
-      if (direct) {
-        const { pool, reversed } = direct;
-        if (!reversed) { pool.rA += amt * (1 - FEE); pool.rB -= out; }
-        else            { pool.rB += amt * (1 - FEE); pool.rA -= out; }
-      }
-    }
-    balances[fromToken] -= amt;
-    balances[toToken]   += out;
-
-    const tx = {
-      id: Date.now(),
-      from: fromToken,
-      to: toToken,
-      amtIn: amt,
-      amtOut: out,
-      time: new Date().toISOString(),
-      txHash: swapTxHash,
-    };
-    txHistory.unshift(tx);
-    localStorage.setItem('nexus_history', JSON.stringify(txHistory.slice(0, 50)));
-
-    document.getElementById('fromAmount').value = '';
-    document.getElementById('toAmount').value   = '';
-    closeConfirm();
-    btn.innerHTML = 'Confirm Swap';
-    btn.disabled  = false;
-    updateRate();
-    showToast(`✓ Swapped ${fmt(amt)} ${fromToken} → ${fmt(out)} ${toToken}`, 'success');
-
-  } catch (err) {
-    btn.innerHTML = 'Confirm Swap';
-    btn.disabled  = false;
-    const msg = err?.message || 'Transaction failed';
-    if (msg.includes('rejected') || msg.includes('denied') || msg.includes('4001')) {
-      showToast('Transaction rejected by user', 'error');
-    } else {
-      showToast(msg.length > 60 ? msg.slice(0, 60) + '...' : msg, 'error');
-    }
-  }
+function executeSwap() {
+  const amount = parseFloat(document.getElementById('fromAmount').value);
+  if (!amount) return;
+  
+  const result = getRoute(fromToken, toToken, amount);
+  if (!result) return;
+  
+  const { out, impact, route } = result;
+  
+  // Deduct from balance
+  balances[fromToken] = (balances[fromToken] || 0) - amount;
+  balances[toToken] = (balances[toToken] || 0) + out;
+  
+  // Add to history
+  const tx = {
+    from: fromToken,
+    to: toToken,
+    amountIn: amount,
+    amountOut: out,
+    rate: out / amount,
+    timestamp: new Date().toISOString(),
+    route: route,
+  };
+  txHistory.unshift(tx);
+  localStorage.setItem('nexus_history', JSON.stringify(txHistory));
+  
+  closeConfirm();
+  document.getElementById('fromAmount').value = '';
+  document.getElementById('toAmount').value = '';
+  updateRate();
+  
+  toast(`Swapped ${fmt(amount)} ${fromToken} for ${fmt(out)} ${toToken}`, 'success');
 }
 
-// Demo swap (no wallet / NEX native token)
-function executeDemoSwap(amt, out) {
-  const btn = document.getElementById('confirmExecBtn');
-  btn.innerHTML = '<span class="spinner"></span>Confirming...';
-  btn.disabled = true;
-  setTimeout(() => {
-    const result = getRoute(fromToken, toToken, amt);
-    if (result) {
-      const direct = getPool(fromToken, toToken);
-      if (direct) {
-        const { pool, reversed } = direct;
-        if (!reversed) { pool.rA += amt * (1 - FEE); pool.rB -= out; }
-        else            { pool.rB += amt * (1 - FEE); pool.rA -= out; }
-      }
-    }
-    balances[fromToken] -= amt;
-    balances[toToken]   += out;
-    const tx = {
-      id: Date.now(), from: fromToken, to: toToken,
-      amtIn: amt, amtOut: out, time: new Date().toISOString(),
-      txHash: '0x' + Math.random().toString(16).substr(2, 40),
-    };
-    txHistory.unshift(tx);
-    localStorage.setItem('nexus_history', JSON.stringify(txHistory.slice(0, 50)));
-    document.getElementById('fromAmount').value = '';
-    document.getElementById('toAmount').value   = '';
-    closeConfirm();
-    btn.innerHTML = 'Confirm Swap';
-    btn.disabled  = false;
-    updateRate();
-    showToast(`[Demo] Swapped ${fmt(amt)} ${fromToken} → ${fmt(out)} ${toToken}`, 'success');
-  }, 1200);
-}
-
-// ── HISTORY ────────────────────────────────────────────────────────────────────
 function renderHistory() {
-  const list = document.getElementById('historyList');
+  const histList = document.getElementById('historyList');
+  
   if (txHistory.length === 0) {
-    list.innerHTML = `<div class="empty-state"><div class="icon">📋</div><p>No swaps yet.<br>Make your first swap to see history here.</p></div>`;
-    return;
-  }
-  list.innerHTML = txHistory.map(tx => {
-    const d = new Date(tx.time);
-    const timeStr = d.toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
-    const txUrl = `${EXPLORER_BASE_URL}/tx/${tx.txHash}`;
-    return `
-      <div class="hist-item">
-        <div class="hist-icon">⇄</div>
-        <div class="hist-main">
-          <div class="hist-tokens">${tx.from} → ${tx.to}</div>
-          <div class="hist-time">
-            ${timeStr} ·
-            <a href="${txUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);text-decoration:none;">
-              ${tx.txHash.substr(0,10)}...
-            </a>
-          </div>
-        </div>
-        <div class="hist-amount">
-          <div class="hist-out">+${fmt(tx.amtOut)} ${tx.to}</div>
-          <div class="hist-in">-${fmt(tx.amtIn)} ${tx.from}</div>
-        </div>
-        <div class="hist-badge">✓</div>
+    histList.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📋</div>
+        <p>No transactions yet. Start swapping to see your history.</p>
       </div>
     `;
-  }).join('');
-}
-
-// ── TABS ───────────────────────────────────────────────────────────────────────
-function showTab(tab) {
-  document.getElementById('swapPanel').style.display = tab === 'swap' ? 'block' : 'none';
-  const hp = document.getElementById('historyPanel');
-  hp.style.display = tab === 'history' ? 'block' : 'none';
-  document.getElementById('tabSwap').className = 'tab' + (tab === 'swap' ? ' active' : '');
-  document.getElementById('tabHistory').className = 'tab' + (tab === 'history' ? ' active' : '');
-  if (tab === 'history') renderHistory();
-}
-
-// ── WALLET ─────────────────────────────────────────────────────────────────────
-async function toggleConnect() {
-  if (walletConnected) return;
-
-  // Try MetaMask first
-  if (window.ethereum) {
-    try {
-      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-      const addr = accounts[0];
-      walletAddress = addr;
-
-      // Try to switch/add Nexus Testnet (chainId 3945 = 0xF69)
-      try {
-        await window.ethereum.request({
-          method: 'wallet_switchEthereumChain',
-          params: [{ chainId: '0xF69' }],
-        });
-      } catch (switchErr) {
-        if (switchErr.code === 4902) {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [{
-              chainId: '0xF69',
-              chainName: 'Nexus Testnet',
-              nativeCurrency: { name: 'NEX', symbol: 'NEX', decimals: 18 },
-              rpcUrls: ['https://rpc.testnet.nexus.xyz'],
-              blockExplorerUrls: ['https://explorer.testnet.nexus.xyz'],
-            }],
-          });
-        }
-      }
-
-      connectWallet(addr.substr(0,6) + '...' + addr.substr(-4));
-    } catch (e) {
-      showToast('Connection rejected', 'error');
-    }
-  } else {
-    // Simulate connect for demo
-    walletAddress = null;
-    connectWallet('0xDemo...SWAP');
-    showToast('Demo mode: No wallet detected', '');
+    return;
+  }
+  
+  histList.innerHTML = '';
+  for (const tx of txHistory) {
+    const date = new Date(tx.timestamp);
+    const timeStr = date.toLocaleTimeString();
+    
+    const item = document.createElement('div');
+    item.className = 'hist-item';
+    item.innerHTML = `
+      <div class="hist-icon">⇄</div>
+      <div class="hist-main">
+        <div class="hist-tokens">${tx.from} → ${tx.to}</div>
+        <div class="hist-time">${timeStr}</div>
+      </div>
+      <div class="hist-amount">
+        <div class="hist-out">+${fmt(tx.amountOut)} ${tx.to}</div>
+        <div class="hist-in" style="font-size:11px">-${fmt(tx.amountIn)} ${tx.from}</div>
+      </div>
+    `;
+    histList.appendChild(item);
   }
 }
 
-function connectWallet(label) {
-  walletConnected = true;
-  document.getElementById('connectBtn').textContent = label;
-  document.getElementById('connectBtn').classList.add('connected');
-  document.getElementById('statusDot').classList.add('connected');
-  document.getElementById('statusText').textContent = 'Connected to Nexus Testnet · AMM active';
-  updateSwapBtn();
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ── TOAST ──────────────────────────────────────────────────────────────────────
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show ' + (type || '');
-  setTimeout(() => { t.className = ''; }, 3500);
-}
-
-// ── INIT ───────────────────────────────────────────────────────────────────────
-renderTokenBtn('from');
-renderTokenBtn('to');
-updateRate();
-updateSwapBtn();
-
-// Close modal on backdrop click
-document.getElementById('tokenModal').addEventListener('click', function(e) {
-  if (e.target === this) closeModal();
-});
-document.getElementById('confirmModal').addEventListener('click', function(e) {
-  if (e.target === this) closeConfirm();
+// Initialize on page load
+window.addEventListener('load', () => {
+  renderTokenBtn('from');
+  renderTokenBtn('to');
 });
 </script>
+
 </body>
 </html>
