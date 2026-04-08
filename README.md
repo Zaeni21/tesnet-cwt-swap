@@ -9,6 +9,7 @@ A modern, high-performance mobile application for token swapping on a local bloc
 - Real-time exchange rate quotes with instant calculation
 - Intuitive token selection with searchable modal
 - Swap confirmation sheet with detailed transaction preview
+- Per-swap wallet signature flow on web demo (`personal_sign`) before execution
 - Haptic feedback on user interactions
 
 ### 📊 Transaction History
@@ -30,6 +31,14 @@ A modern, high-performance mobile application for token swapping on a local bloc
 - Smooth animations and transitions
 - Accessible color palette with high contrast
 - Custom app icon with brand identity
+
+### 🌐 Web Demo Pages
+- `public/index.html` → landing page (`tesnet.cwt.swap` branding)
+- `public/app.html` → standalone swap demo UI with:
+  - wallet connect (MetaMask) + Nexus Testnet chain switch/add (`0xF69`)
+  - explicit confirm modal for each swap
+  - wallet signature prompt for each confirmed swap when wallet is available
+  - demo fallback mode when no wallet provider is detected
 
 ## Tech Stack
 
